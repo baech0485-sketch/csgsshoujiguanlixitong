@@ -1,10 +1,8 @@
 import { expect, test } from "@playwright/test";
+import { loginAsAdmin } from "./helpers";
 
 test("领用分配页应支持同一员工一次分配多台手机并生成单个领取确认链接", async ({ page }) => {
-  await page.goto("/login");
-  await page.getByLabel("账号").fill("csgs_admin");
-  await page.getByLabel("密码", { exact: true }).fill("CSGS@2026!Admin");
-  await page.getByRole("button", { name: "登录系统" }).click();
+  await loginAsAdmin(page);
   await page.waitForURL(/\/dashboard$/, { timeout: 15000 });
 
   const suffix = String(Date.now()).slice(-6);

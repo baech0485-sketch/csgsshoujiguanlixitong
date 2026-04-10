@@ -1,10 +1,8 @@
 import { expect, test } from "@playwright/test";
+import { loginAsAdmin } from "./helpers";
 
 test("异常管理页应支持按员工搜索并生成异常确认链接", async ({ page }) => {
-  await page.goto("/login");
-  await page.getByLabel("账号").fill("csgs_admin");
-  await page.getByLabel("密码", { exact: true }).fill("CSGS@2026!Admin");
-  await page.getByRole("button", { name: "登录系统" }).click();
+  await loginAsAdmin(page);
   await page.waitForURL(/\/dashboard$/, { timeout: 15000 });
 
   const suffix = String(Date.now()).slice(-6);
@@ -52,10 +50,7 @@ test("异常管理页应支持按员工搜索并生成异常确认链接", async
 });
 
 test("员工确认异常后设备应进入维修中且员工卡片应显示维修数量", async ({ page }) => {
-  await page.goto("/login");
-  await page.getByLabel("账号").fill("csgs_admin");
-  await page.getByLabel("密码", { exact: true }).fill("CSGS@2026!Admin");
-  await page.getByRole("button", { name: "登录系统" }).click();
+  await loginAsAdmin(page);
   await page.waitForURL(/\/dashboard$/, { timeout: 15000 });
 
   const suffix = String(Date.now()).slice(-6);
@@ -117,10 +112,7 @@ test("员工确认异常后设备应进入维修中且员工卡片应显示维�
 });
 
 test("异常管理页应展示维修中手机列表并支持维修完成后恢复状态", async ({ page }) => {
-  await page.goto("/login");
-  await page.getByLabel("账号").fill("csgs_admin");
-  await page.getByLabel("密码", { exact: true }).fill("CSGS@2026!Admin");
-  await page.getByRole("button", { name: "登录系统" }).click();
+  await loginAsAdmin(page);
   await page.waitForURL(/\/dashboard$/, { timeout: 15000 });
 
   const suffix = String(Date.now()).slice(-6);

@@ -1,10 +1,8 @@
 import { expect, test } from "@playwright/test";
+import { loginAsAdmin } from "./helpers";
 
 test("离职回收页应按员工带出名下设备并生成归还确认链接", async ({ page }) => {
-  await page.goto("/login");
-  await page.getByLabel("账号").fill("csgs_admin");
-  await page.getByLabel("密码", { exact: true }).fill("CSGS@2026!Admin");
-  await page.getByRole("button", { name: "登录系统" }).click();
+  await loginAsAdmin(page);
   await page.waitForURL(/\/dashboard$/, { timeout: 15000 });
 
   const suffix = String(Date.now()).slice(-6);

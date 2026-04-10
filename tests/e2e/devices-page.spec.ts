@@ -1,10 +1,8 @@
 import { test, expect } from "@playwright/test";
+import { loginAsAdmin } from "./helpers";
 
 test("手机资产台账页应支持通过查询参数联动列表和右侧详情", async ({ page }) => {
-  await page.goto("/login");
-  await page.getByLabel("账号").fill("csgs_admin");
-  await page.getByLabel("密码", { exact: true }).fill("CSGS@2026!Admin");
-  await page.getByRole("button", { name: "登录系统" }).click();
+  await loginAsAdmin(page);
   await page.waitForURL(/\/dashboard$/, { timeout: 15000 });
 
   await page.goto("/devices?modal=new");
@@ -33,10 +31,7 @@ test("手机资产台账页应支持通过查询参数联动列表和右侧详�
 });
 
 test("手机资产页筛选区应自动应用搜索和筛选且不显示品牌筛选", async ({ page }) => {
-  await page.goto("/login");
-  await page.getByLabel("账号").fill("csgs_admin");
-  await page.getByLabel("密码", { exact: true }).fill("CSGS@2026!Admin");
-  await page.getByRole("button", { name: "登录系统" }).click();
+  await loginAsAdmin(page);
   await page.waitForURL(/\/dashboard$/, { timeout: 15000 });
 
   await page.goto("/devices?modal=new");
@@ -69,10 +64,7 @@ test("手机资产页筛选区应自动应用搜索和筛选且不显示品牌�
 });
 
 test("录入手机应支持上传压缩后的设备图片并在详情页展示", async ({ page }) => {
-  await page.goto("/login");
-  await page.getByLabel("账号").fill("csgs_admin");
-  await page.getByLabel("密码", { exact: true }).fill("CSGS@2026!Admin");
-  await page.getByRole("button", { name: "登录系统" }).click();
+  await loginAsAdmin(page);
   await page.waitForURL(/\/dashboard$/, { timeout: 15000 });
 
   await page.goto("/devices?modal=new");
@@ -97,10 +89,7 @@ test("录入手机应支持上传压缩后的设备图片并在详情页展示",
 });
 
 test("手机资产页应支持复制手机录入链接并在手机端打开录入页", async ({ page }) => {
-  await page.goto("/login");
-  await page.getByLabel("账号").fill("csgs_admin");
-  await page.getByLabel("密码", { exact: true }).fill("CSGS@2026!Admin");
-  await page.getByRole("button", { name: "登录系统" }).click();
+  await loginAsAdmin(page);
   await page.waitForURL(/\/dashboard$/, { timeout: 15000 });
 
   await page.goto("/devices?modal=new");
@@ -130,10 +119,7 @@ test("手机资产页应支持复制手机录入链接并在手机端打开录�
 });
 
 test("手机录入弹窗应清晰区分自动生成、必填、选填并使用卡片式上传框", async ({ page }) => {
-  await page.goto("/login");
-  await page.getByLabel("账号").fill("csgs_admin");
-  await page.getByLabel("密码", { exact: true }).fill("CSGS@2026!Admin");
-  await page.getByRole("button", { name: "登录系统" }).click();
+  await loginAsAdmin(page);
   await page.waitForURL(/\/dashboard$/, { timeout: 15000 });
 
   await page.goto("/devices?modal=new");

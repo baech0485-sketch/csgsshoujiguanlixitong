@@ -1,10 +1,8 @@
 import { expect, test } from "@playwright/test";
+import { loginAsAdmin } from "./helpers";
 
 test("员工应可通过领取确认链接勾选确认并完成领用", async ({ page }) => {
-  await page.goto("/login");
-  await page.getByLabel("账号").fill("csgs_admin");
-  await page.getByLabel("密码", { exact: true }).fill("CSGS@2026!Admin");
-  await page.getByRole("button", { name: "登录系统" }).click();
+  await loginAsAdmin(page);
   await page.waitForURL(/\/dashboard$/, { timeout: 15000 });
 
   const suffix = String(Date.now()).slice(-6);
@@ -57,10 +55,7 @@ test("员工应可通过领取确认链接勾选确认并完成领用", async ({
 });
 
 test("同一员工多手机分配时领取确认链接内应展示多台手机", async ({ page }) => {
-  await page.goto("/login");
-  await page.getByLabel("账号").fill("csgs_admin");
-  await page.getByLabel("密码", { exact: true }).fill("CSGS@2026!Admin");
-  await page.getByRole("button", { name: "登录系统" }).click();
+  await loginAsAdmin(page);
   await page.waitForURL(/\/dashboard$/, { timeout: 15000 });
 
   const suffix = String(Date.now()).slice(-6);

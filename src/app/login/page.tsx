@@ -1,5 +1,6 @@
 import { LockIcon } from "@/components/icons";
 import { LoginForm } from "@/components/login-form";
+import { DEFAULT_ADMIN_USERNAME } from "@/lib/admin-account";
 
 export default function LoginPage() {
   return (
@@ -30,10 +31,10 @@ export default function LoginPage() {
             <span className="desktop-topbar__badge auth-form__badge"><LockIcon color="var(--text-primary)" /></span>
             <h2>登录后台</h2>
           </div>
-          <p className="auth-form__subtitle">请输入账号和密码进入后台管理系统</p>
+          <p className="auth-form__subtitle">当前登录管理员：{DEFAULT_ADMIN_USERNAME}</p>
         </div>
         <LoginForm />
-        <p className="auth-form__tip">支持管理员与销售主管账号登录</p>
+        <p className="auth-form__tip">输入管理员登录密码即可进入后台，默认记住密码并保持长期登录。</p>
       </section>
     </main>
   );

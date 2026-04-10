@@ -1,15 +1,19 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { EyeIcon, EyeOffIcon } from "@/components/icons";
+import {
+  getBrowserRememberedLoginState,
+  persistBrowserRememberedLogin,
+} from "@/lib/remember-login";
 
 export function LoginForm() {
   const router = useRouter();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const initialLoginState = useRef(getBrowserRememberedLoginState());
+  const [password, setPassword] = useState(initialLoginState.current.password);
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberPassword, setRememberPassword] = useState(true);
+  const [rememberPassword, setRememberPassword] = useState(initialLoginState.current.rememberPassword);
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
 
@@ -22,7 +26,7 @@ export function LoginForm() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ password, rememberPassword }),
     });
 
     const payload = (await response.json()) as { message?: string };
@@ -31,6 +35,8 @@ export function LoginForm() {
       setError(payload.message || "登录失败");
       return;
     }
+
+    persistBrowserRememberedLogin({ password, rememberPassword });
 
     startTransition(() => {
       router.push("/dashboard");
@@ -41,17 +47,13 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit}>
       <label className="field">
-        <span>账号</span>
-        <input aria-label="账号" value={username} placeholder="请输入账号" onChange={(event) => setUsername(event.target.value)} />
-      </label>
-      <label className="field">
-        <span>密码</span>
+        <span>登录密码</span>
         <div className="field__control">
           <input
-            aria-label="密码"
+            aria-label="登录密码"
             value={password}
             type={showPassword ? "text" : "password"}
-            placeholder="请输入密码"
+            placeholder="请输入管理员登录密码"
             onChange={(event) => setPassword(event.target.value)}
           />
           <button

@@ -1,19 +1,28 @@
 import { NextResponse } from "next/server";
-import { validateAdminCredentials } from "@/lib/auth-user";
-import { createSessionValue, getSessionSecret, SESSION_COOKIE_NAME } from "@/lib/session";
+import { validateAdminPassword } from "@/lib/auth-user";
+import {
+  createSessionValue,
+  getSessionSecret,
+  SESSION_COOKIE_NAME,
+  SESSION_MAX_AGE_SECONDS,
+  SESSION_SHORT_MAX_AGE_SECONDS,
+} from "@/lib/session";
 
 export async function POST(request: Request) {
-  const payload = (await request.json()) as { username?: string; password?: string };
-  const username = payload.username?.trim() || "";
+  const payload = (await request.json()) as {
+    password?: string;
+    rememberPassword?: boolean;
+  };
   const password = payload.password?.trim() || "";
+  const rememberPassword = payload.rememberPassword !== false;
 
-  if (!username || !password) {
-    return NextResponse.json({ message: "账号和密码不能为空" }, { status: 400 });
+  if (!password) {
+    return NextResponse.json({ message: "请输入登录密码" }, { status: 400 });
   }
 
-  const identity = await validateAdminCredentials(username, password);
+  const identity = await validateAdminPassword(password);
   if (!identity) {
-    return NextResponse.json({ message: "账号或密码错误" }, { status: 401 });
+    return NextResponse.json({ message: "登录密码错误" }, { status: 401 });
   }
 
   const response = NextResponse.json({ ok: true });
@@ -22,7 +31,7 @@ export async function POST(request: Request) {
     sameSite: "lax",
     secure: false,
     path: "/",
-    maxAge: 60 * 60 * 8,
+    maxAge: rememberPassword ? SESSION_MAX_AGE_SECONDS : SESSION_SHORT_MAX_AGE_SECONDS,
   });
 
   return response;

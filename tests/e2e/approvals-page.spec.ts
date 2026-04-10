@@ -1,10 +1,8 @@
 import { expect, test } from "@playwright/test";
+import { loginAsAdmin } from "./helpers";
 
 test("旧审批中心入口应跳转到领用分配工作台", async ({ page }) => {
-  await page.goto("/login");
-  await page.getByLabel("账号").fill("csgs_admin");
-  await page.getByLabel("密码", { exact: true }).fill("CSGS@2026!Admin");
-  await page.getByRole("button", { name: "登录系统" }).click();
+  await loginAsAdmin(page);
   await page.waitForURL(/\/dashboard$/, { timeout: 15000 });
 
   await page.goto("/approvals");
@@ -15,10 +13,7 @@ test("旧审批中心入口应跳转到领用分配工作台", async ({ page }) 
 });
 
 test("领用分配工作台应展示分配生成的确认记录与链接", async ({ page }) => {
-  await page.goto("/login");
-  await page.getByLabel("账号").fill("csgs_admin");
-  await page.getByLabel("密码", { exact: true }).fill("CSGS@2026!Admin");
-  await page.getByRole("button", { name: "登录系统" }).click();
+  await loginAsAdmin(page);
   await page.waitForURL(/\/dashboard$/, { timeout: 15000 });
 
   const suffix = String(Date.now()).slice(-6);
@@ -75,10 +70,7 @@ test("领用分配工作台应展示分配生成的确认记录与链接", async
 });
 
 test("领用分配工作台应在员工勾选确认后同步显示已领取结果", async ({ page }) => {
-  await page.goto("/login");
-  await page.getByLabel("账号").fill("csgs_admin");
-  await page.getByLabel("密码", { exact: true }).fill("CSGS@2026!Admin");
-  await page.getByRole("button", { name: "登录系统" }).click();
+  await loginAsAdmin(page);
   await page.waitForURL(/\/dashboard$/, { timeout: 15000 });
 
   const suffix = String(Date.now()).slice(-6);

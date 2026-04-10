@@ -1,4 +1,5 @@
 import { pbkdf2Sync, randomBytes, timingSafeEqual } from "node:crypto";
+import { DEFAULT_ADMIN_USERNAME } from "@/lib/admin-account";
 
 export type AdminIdentity = {
   username: string;
@@ -22,7 +23,7 @@ export function verifyPassword(password: string, salt: string, hash: string) {
   return candidate.length === target.length && timingSafeEqual(candidate, target);
 }
 
-export async function validateAdminCredentials(username: string, password: string): Promise<AdminIdentity | null> {
+export async function validateAdminPassword(password: string, username = DEFAULT_ADMIN_USERNAME): Promise<AdminIdentity | null> {
   const { getAdminUsersCollection } = await import("@/lib/mongodb");
   const admins = await getAdminUsersCollection();
   const admin = (await admins.findOne({
