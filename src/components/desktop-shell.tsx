@@ -9,8 +9,8 @@ import {
   IncidentIcon,
   RecoveryIcon,
 } from "@/components/icons";
+import { DesktopUserChip } from "@/components/desktop-user-chip";
 import { LogoutButton } from "@/components/logout-button";
-import { getCurrentSession } from "@/lib/session-server";
 import { desktopSidebarItems } from "@/lib/tokens";
 
 const iconMap = {
@@ -23,7 +23,7 @@ const iconMap = {
   incident: IncidentIcon,
 } as const;
 
-export async function DesktopShell({
+export function DesktopShell({
   title,
   subtitle,
   activeHref,
@@ -34,9 +34,6 @@ export async function DesktopShell({
   activeHref: string;
   children: ReactNode;
 }) {
-  const session = await getCurrentSession();
-  const identity = session ? `${session.role} · ${session.username}` : "未登录";
-
   return (
     <div className="desktop-screen">
       <aside className="desktop-sidebar">
@@ -68,7 +65,7 @@ export async function DesktopShell({
             <p className="desktop-page-subtitle">{subtitle}</p>
           </div>
           <div className="desktop-topbar__auth">
-            <div className="desktop-user-chip">{identity}</div>
+            <DesktopUserChip />
             <LogoutButton />
           </div>
         </header>

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { clearBrowserFrontendAuthSession } from "@/lib/frontend-auth";
 
 export function LogoutButton() {
   const router = useRouter();
@@ -10,14 +11,7 @@ export function LogoutButton() {
 
   async function handleLogout() {
     setMessage("");
-    const response = await fetch("/api/auth/logout", {
-      method: "POST",
-    });
-
-    if (!response.ok) {
-      setMessage("退出失败");
-      return;
-    }
+    clearBrowserFrontendAuthSession();
 
     startTransition(() => {
       router.push("/login");

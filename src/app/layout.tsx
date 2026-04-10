@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AR_One_Sans, Noto_Sans_SC } from "next/font/google";
+import { FrontendAuthGate } from "@/components/frontend-auth-gate";
 import "./globals.css";
 import "./desktop.css";
 import "./mobile.css";
@@ -26,7 +27,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="zh-CN">
-      <body className={`${notoSansSc.variable} ${arOneSans.variable}`}>{children}</body>
+      <body className={`${notoSansSc.variable} ${arOneSans.variable}`}>
+        <FrontendAuthGate>{children}</FrontendAuthGate>
+      </body>
     </html>
   );
 }

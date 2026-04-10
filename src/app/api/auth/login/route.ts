@@ -1,12 +1,5 @@
 import { NextResponse } from "next/server";
 import { validateAdminPassword } from "@/lib/auth-user";
-import {
-  createSessionValue,
-  getSessionSecret,
-  SESSION_COOKIE_NAME,
-  SESSION_MAX_AGE_SECONDS,
-  SESSION_SHORT_MAX_AGE_SECONDS,
-} from "@/lib/session";
 
 export async function POST(request: Request) {
   const payload = (await request.json()) as {
@@ -25,14 +18,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "登录密码错误" }, { status: 401 });
   }
 
-  const response = NextResponse.json({ ok: true });
-  response.cookies.set(SESSION_COOKIE_NAME, createSessionValue(identity, getSessionSecret()), {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: false,
-    path: "/",
-    maxAge: rememberPassword ? SESSION_MAX_AGE_SECONDS : SESSION_SHORT_MAX_AGE_SECONDS,
+  return NextResponse.json({
+    ok: true,
+    rememberPassword,
+    identity,
   });
-
-  return response;
 }

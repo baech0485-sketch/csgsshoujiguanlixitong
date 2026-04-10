@@ -3,6 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import { EyeIcon, EyeOffIcon } from "@/components/icons";
+import { validateFrontendAdminPassword } from "@/lib/admin-account";
+import {
+  createFrontendAuthSession,
+  persistBrowserFrontendAuthSession,
+} from "@/lib/frontend-auth";
 import {
   getBrowserRememberedLoginState,
   persistBrowserRememberedLogin,
@@ -21,21 +26,12 @@ export function LoginForm() {
     event.preventDefault();
     setError("");
 
-    const response = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ password, rememberPassword }),
-    });
-
-    const payload = (await response.json()) as { message?: string };
-
-    if (!response.ok) {
-      setError(payload.message || "登录失败");
+    if (!validateFrontendAdminPassword(password)) {
+      setError("登录密码错误");
       return;
     }
 
+    persistBrowserFrontendAuthSession(createFrontendAuthSession());
     persistBrowserRememberedLogin({ password, rememberPassword });
 
     startTransition(() => {
