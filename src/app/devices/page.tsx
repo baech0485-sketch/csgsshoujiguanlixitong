@@ -1,0 +1,137 @@
+import Image from "next/image";
+import { AssetStatusPill } from "@/components/asset-status-pill";
+import { PaginationNav } from "@/components/pagination-nav";
+import { DevicesFilters } from "@/components/devices-filters";
+import { DeviceEntryModal } from "@/components/device-entry-modal";
+import { DesktopShell } from "@/components/desktop-shell";
+import { Panel, PrimaryButton } from "@/components/ui";
+import { getNextDeviceCode } from "@/lib/device-data";
+import { applyDeviceFilters, inferBrand, type DeviceListRow } from "@/lib/device-listing";
+import { getDevicesCollection } from "@/lib/mongodb";
+import { normalizePageParam, paginateItems } from "@/lib/pagination";
+import { getPublicBaseUrl } from "@/lib/public-base-url";
+
+type DevicesPageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+async function getDeviceRows(): Promise<DeviceListRow[]> {
+  try {
+    const devices = await getDevicesCollection();
+    const rows = await devices.find().sort({ updatedAt: -1 }).limit(50).toArray();
+
+    return rows.map((row) => ({
+      code: String(row.assetCode ?? ""),
+      model: `${String(row.brand ?? "")} ${String(row.model ?? "")} / ${String(row.storage ?? "")}`.trim(),
+      owner: row.currentOwner ? String(row.currentOwner) : "库存",
+      status: String(row.status ?? "待分配"),
+      date: row.updatedAt ? new Date(String(row.updatedAt)).toISOString().slice(0, 16).replace("T", " ") : "",
+      tone: "selected",
+      brand: String(row.brand ?? ""),
+      photoDataUrl: row.photoDataUrl ? String(row.photoDataUrl) : "",
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export default async function DevicesPage({ searchParams }: DevicesPageProps) {
+  const params = await searchParams;
+  const showModal = params.modal === "new";
+  const nextDeviceCode = await getNextDeviceCode();
+  const warehousingDate = new Date().toISOString().slice(0, 10);
+  const publicBaseUrl = await getPublicBaseUrl();
+  const allRows = await getDeviceRows();
+  const filters = {
+    search: String(params.search ?? ""),
+    status: String(params.status ?? ""),
+    owner: String(params.owner ?? ""),
+  };
+  const rows = applyDeviceFilters(allRows, { ...filters, brand: "" });
+  const paginated = paginateItems(rows, normalizePageParam(String(params.page ?? "")), 10);
+  const visibleRows = paginated.items;
+  const selectedCode = String(params.selected ?? visibleRows[0]?.code ?? "");
+  const selected = visibleRows.find((row) => row.code === selectedCode) || visibleRows[0] || null;
+  const owners = [...new Set(allRows.map((row) => row.owner).filter(Boolean))];
+  const queryBase = new URLSearchParams();
+  if (filters.search) queryBase.set("search", filters.search);
+  if (filters.status) queryBase.set("status", filters.status);
+  if (filters.owner) queryBase.set("owner", filters.owner);
+
+  return (
+    <main className="page-shell">
+      <DesktopShell activeHref="/devices" title="手机资产台账" subtitle="支持多条件筛选、批量操作、状态留痕与右侧详情联动">
+        <Panel className="filters-panel">
+          <DevicesFilters
+            initialSearch={filters.search}
+            initialStatus={filters.status}
+            initialOwner={filters.owner}
+            owners={owners}
+            entryLink={`${publicBaseUrl}/m/device-entry`}
+          />
+        </Panel>
+        <section className="device-grid">
+          <Panel title="设备列表" subtitle={`当前共 ${rows.length} 条记录 · 每页 10 条`} className="device-table-panel">
+            <div className="device-table__head"><span>手机编号</span><span>设备信息</span><span>责任人</span><span>状态</span><span>更新时间</span></div>
+            <div className="device-table__body">
+              {visibleRows.length ? visibleRows.map((row) => {
+                const query = new URLSearchParams(queryBase);
+                query.set("selected", row.code);
+                if (paginated.page > 1) query.set("page", String(paginated.page));
+                return (
+                <a key={row.code} href={`/devices?${query.toString()}`} className={`device-row${selected?.code === row.code ? " is-highlight" : ""}`}>
+                  <span>{row.code}</span><span>{row.model}</span><span>{row.owner}</span>
+                  <span><AssetStatusPill status={row.status} /></span>
+                  <span>{row.date}</span>
+                </a>
+              );}) : <div className="device-empty">暂无匹配设备，请调整筛选条件或先录入手机资产。</div>}
+            </div>
+            <PaginationNav
+              page={paginated.page}
+              totalPages={paginated.totalPages}
+              totalItems={paginated.totalItems}
+              pageSize={paginated.pageSize}
+              hrefForPage={(page) => {
+                const query = new URLSearchParams(queryBase);
+                if (page > 1) query.set("page", String(page));
+                return `/devices${query.size ? `?${query.toString()}` : ""}`;
+              }}
+            />
+          </Panel>
+          <Panel title="设备速览" subtitle="与表格联动显示当前选中设备" className="device-side-panel">
+            <div className="device-hero-box">
+              {selected?.photoDataUrl ? <Image src={selected.photoDataUrl} alt="设备图片" fill unoptimized className="device-hero-box__image" /> : null}
+            </div>
+            <div className="device-side-panel__info">
+              {selected ? (
+                <>
+                  <p>{selected.model.split("/")[0]?.trim() || selected.model}</p>
+                  <p>{selected.model.split("/")[1]?.trim() || selected.brand || inferBrand(selected.model)}</p>
+                  <p>手机编号：{selected.code}</p>
+                  <p>当前责任人：{selected.owner}</p>
+                  <div className="device-side-panel__status-row">
+                    <span>当前状态：</span>
+                    <AssetStatusPill status={selected.status} />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p>当前暂无设备数据</p>
+                  <p>请先通过右上角“手机录入”按钮录入设备</p>
+                </>
+              )}
+            </div>
+            <div className="device-side-panel__actions">
+              {selected ? (
+                <PrimaryButton href={`/devices/${selected.code}`}>查看完整详情</PrimaryButton>
+              ) : (
+                <button className="button button--ghost" type="button" disabled>暂无详情</button>
+              )}
+            </div>
+          </Panel>
+        </section>
+        {showModal ? <DeviceEntryModal nextDeviceCode={nextDeviceCode} warehousingDate={warehousingDate} /> : null}
+      </DesktopShell>
+    </main>
+  );
+}

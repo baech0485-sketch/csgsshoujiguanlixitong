@@ -1,0 +1,42 @@
+{
+  "name": "csgsshoujiguanlixitong",
+  "version": "1.0.0",
+  "description": "呈尚策划公司手机管理系统前端项目",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint src tests next.config.ts playwright.config.ts vitest.config.ts eslint.config.mjs",
+    "test": "vitest run",
+    "test:e2e": "npm run build && playwright test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "mongodb": "^7.1.1",
+    "next": "^16.2.2",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.5",
+    "@eslint/js": "^9.39.1",
+    "@next/eslint-plugin-next": "^16.2.2",
+    "@playwright/test": "^1.59.1",
+    "@types/node": "^25.5.2",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.2.2",
+    "globals": "^17.4.0",
+    "jsdom": "^29.0.1",
+    "typescript": "^6.0.2",
+    "typescript-eslint": "^8.58.0",
+    "vitest": "^4.1.2"
+  }
+}

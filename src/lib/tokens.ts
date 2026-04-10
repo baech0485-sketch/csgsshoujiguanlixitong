@@ -1,0 +1,32 @@
+export const colorTokens = {
+  page: "#f7f3ec",
+  surface: "#fffdfc",
+  surfaceMuted: "#eee6d9",
+  primarySurface: "#103c43",
+  primarySurfaceSoft: "#184c53",
+  accent: "#2aa7a1",
+  accentGold: "#c59a52",
+  accentGoldSoft: "#ddbb83",
+  textPrimary: "#163238",
+  textSecondary: "#4b6165",
+  textInverse: "#fffdfc",
+  border: "#d7d0c2",
+  danger: "#b25140",
+  dangerSoft: "#f4e3de",
+  success: "#1f805e",
+  successSoft: "#e6f4ee",
+  warning: "#be8a2f",
+  warningSoft: "#f6e8d0",
+  info: "#2e74d7",
+  infoSoft: "#e8effc",
+  selectedSoft: "#dff4f0",
+} as const;
+
+export const desktopSidebarItems = [
+  { href: "/dashboard", label: "仪表盘", icon: "dashboard" },
+  { href: "/devices", label: "手机资产", icon: "device" },
+  { href: "/employees", label: "员工管理", icon: "employee" },
+  { href: "/assignments", label: "领用分配", icon: "assignment" },
+  { href: "/offboarding", label: "离职回收", icon: "recovery" },
+  { href: "/incidents", label: "异常管理", icon: "incident" },
+] as const;
