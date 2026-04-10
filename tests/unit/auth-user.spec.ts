@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { hashPassword, verifyPassword } from "@/lib/auth-user";
+import { DEFAULT_ADMIN_PASSWORD, validateFrontendAdminPassword } from "@/lib/admin-account";
 
 describe("auth-user password helpers", () => {
   it("应能生成并验证密码摘要", () => {
@@ -14,5 +15,14 @@ describe("auth-user password helpers", () => {
     const result = hashPassword("CSGS@2026!Admin", "salt-002");
 
     expect(verifyPassword("wrong-password", result.salt, result.hash)).toBe(false);
+  });
+
+  it("固定前端密码应能通过校验", () => {
+    expect(DEFAULT_ADMIN_PASSWORD).toBe("CSGS@2026!Admin");
+    expect(validateFrontendAdminPassword("CSGS@2026!Admin")).toBe(true);
+  });
+
+  it("非固定前端密码不应通过校验", () => {
+    expect(validateFrontendAdminPassword("wrong-password")).toBe(false);
   });
 });
