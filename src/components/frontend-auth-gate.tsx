@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
+  canRenderProtectedPathImmediately,
   getBrowserFrontendAuthSession,
   isPublicFrontendPath,
 } from "@/lib/frontend-auth";
@@ -10,7 +11,10 @@ import {
 export function FrontendAuthGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [isReady, setIsReady] = useState(false);
+  const [isReady, setIsReady] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return canRenderProtectedPathImmediately(pathname, window.location.search, window.localStorage);
+  });
 
   useEffect(() => {
     const session = getBrowserFrontendAuthSession();
@@ -18,12 +22,14 @@ export function FrontendAuthGate({ children }: { children: React.ReactNode }) {
     const isPublic = isPublicFrontendPath(pathname, search);
 
     if (pathname === "/") {
+      setIsReady(false);
       router.replace(session ? "/dashboard" : "/login");
       return;
     }
 
     if (pathname === "/login") {
       if (session) {
+        setIsReady(false);
         router.replace("/dashboard");
         return;
       }
@@ -33,6 +39,7 @@ export function FrontendAuthGate({ children }: { children: React.ReactNode }) {
     }
 
     if (!session && !isPublic) {
+      setIsReady(false);
       router.replace("/login");
       return;
     }

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { AssetStatusPill } from "@/components/asset-status-pill";
 import { PaginationNav } from "@/components/pagination-nav";
 import { DevicesFilters } from "@/components/devices-filters";
@@ -79,11 +80,11 @@ export default async function DevicesPage({ searchParams }: DevicesPageProps) {
                 query.set("selected", row.code);
                 if (paginated.page > 1) query.set("page", String(paginated.page));
                 return (
-                <a key={row.code} href={`/devices?${query.toString()}`} className={`device-row${selected?.code === row.code ? " is-highlight" : ""}`}>
+                <Link key={row.code} href={`/devices?${query.toString()}`} className={`device-row${selected?.code === row.code ? " is-highlight" : ""}`}>
                   <span>{row.code}</span><span>{row.model}</span><span>{row.owner}</span>
                   <span><AssetStatusPill status={row.status} /></span>
                   <span>{row.date}</span>
-                </a>
+                </Link>
               );}) : <div className="device-empty">暂无匹配设备，请调整筛选条件或先录入手机资产。</div>}
             </div>
             <PaginationNav

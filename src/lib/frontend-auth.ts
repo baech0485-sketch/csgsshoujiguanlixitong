@@ -102,3 +102,18 @@ export function isPublicFrontendPath(pathname: string, search: string) {
 
   return false;
 }
+
+export function canRenderProtectedPathImmediately(
+  pathname: string,
+  search: string,
+  storage?: AuthStorage | null,
+) {
+  const session = readFrontendAuthSession(storage);
+  const isPublic = isPublicFrontendPath(pathname, search);
+
+  if (pathname === "/") return false;
+  if (pathname === "/login") return !session;
+  if (!session && !isPublic) return false;
+
+  return true;
+}

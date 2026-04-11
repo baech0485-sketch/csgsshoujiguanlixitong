@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  canRenderProtectedPathImmediately,
   clearFrontendAuthSession,
   createFrontendAuthSession,
   FRONTEND_AUTH_STORAGE_KEY,
@@ -48,5 +49,13 @@ describe("frontend-auth", () => {
 
     clearFrontendAuthSession(storage);
     expect(storage.getItem(FRONTEND_AUTH_STORAGE_KEY)).toBeNull();
+  });
+
+  it("已登录时进入受保护页面应可首屏直接放行", () => {
+    const storage = createMockStorage();
+    storage.setItem(FRONTEND_AUTH_STORAGE_KEY, JSON.stringify(createFrontendAuthSession()));
+
+    expect(canRenderProtectedPathImmediately("/devices/sj-01", "", storage)).toBe(true);
+    expect(canRenderProtectedPathImmediately("/login", "", storage)).toBe(false);
   });
 });
