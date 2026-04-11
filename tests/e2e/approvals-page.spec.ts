@@ -24,6 +24,7 @@ test("领用分配工作台应展示分配生成的确认记录与链接", async
   await page.getByLabel("部门", { exact: true }).selectOption("宜昌销售部");
   await page.getByRole("button", { name: "新增员工" }).click();
   const employeeCardSeed = page.getByRole("article").filter({ hasText: employeeName });
+  await expect(employeeCardSeed.first()).toBeVisible({ timeout: 15000 });
   const employeeCode = (await employeeCardSeed.locator("p").first().textContent())?.split("·")[0]?.trim() || "";
 
   await page.goto("/devices?modal=new");
@@ -81,6 +82,7 @@ test("领用分配工作台应在员工勾选确认后同步显示已领取结�
   await page.getByLabel("部门", { exact: true }).selectOption("武汉销售部");
   await page.getByRole("button", { name: "新增员工" }).click();
   const employeeCardSeed = page.getByRole("article").filter({ hasText: employeeName });
+  await expect(employeeCardSeed.first()).toBeVisible({ timeout: 15000 });
   const employeeCode = (await employeeCardSeed.locator("p").first().textContent())?.split("·")[0]?.trim() || "";
 
   await page.goto("/devices?modal=new");

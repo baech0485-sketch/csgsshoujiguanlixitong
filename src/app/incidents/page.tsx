@@ -5,7 +5,7 @@ import { IncidentWorkspace } from "@/components/incident-workspace";
 import { PaginationNav } from "@/components/pagination-nav";
 import { Panel, StatusPill } from "@/components/ui";
 import { getIncidentWorkspaceView } from "@/lib/incident-management";
-import { normalizePageParam, paginateItems } from "@/lib/pagination";
+import { normalizePageParam } from "@/lib/pagination";
 
 type IncidentsPageProps = {
   searchParams?: Promise<{
@@ -15,8 +15,10 @@ type IncidentsPageProps = {
 
 export default async function IncidentsPage({ searchParams }: IncidentsPageProps) {
   const params = searchParams ? await searchParams : undefined;
-  const { employees, records, repairQueue, summary } = await getIncidentWorkspaceView();
-  const paginated = paginateItems(records, normalizePageParam(params?.page), 10);
+  const { employees, records, repairQueue, summary, pagination } = await getIncidentWorkspaceView(
+    normalizePageParam(params?.page),
+    10,
+  );
 
   return (
     <main className="page-shell">
@@ -38,14 +40,14 @@ export default async function IncidentsPage({ searchParams }: IncidentsPageProps
         <section className="approval-page-layout">
           <IncidentWorkspace employees={employees} />
           <Panel title="异常确认记录" subtitle="保留所有异常确认与处理结果，方便后续追溯和复盘。">
-            <IncidentRecordList records={paginated.items} totalRecords={records.length} />
+            <IncidentRecordList records={records} totalRecords={pagination.totalItems} />
           </Panel>
         </section>
         <PaginationNav
-          page={paginated.page}
-          totalPages={paginated.totalPages}
-          totalItems={paginated.totalItems}
-          pageSize={paginated.pageSize}
+          page={pagination.page}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.totalItems}
+          pageSize={pagination.pageSize}
           hrefForPage={(page) => `/incidents${page > 1 ? `?page=${page}` : ""}`}
         />
       </DesktopShell>

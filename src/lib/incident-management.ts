@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 import { buildOwnerDeviceMetrics } from "@/lib/device-ownership";
 import { getDevicesCollection, getEmployeesCollection, getIncidentsCollection } from "@/lib/mongodb";
+import { buildServerPagination } from "@/lib/pagination";
 
 export type IncidentEmployeeOption = {
   employeeCode: string;
@@ -42,14 +43,35 @@ export type IncidentSummary = {
   lost: number;
 };
 
-export async function getIncidentWorkspaceView() {
+function mapIncidentRecord(row: Record<string, unknown>): IncidentRecordRow {
+  return {
+    id: String((row._id as ObjectId).toString()),
+    employeeCode: String(row.employeeCode ?? ""),
+    employeeName: String(row.employeeName ?? ""),
+    department: String(row.department ?? ""),
+    deviceCode: String(row.assetCode ?? ""),
+    deviceTitle: String(row.deviceTitle ?? ""),
+    type: String(row.type ?? ""),
+    status: String(row.status ?? ""),
+    description: String(row.description ?? ""),
+    confirmUrl: String(row.confirmUrl ?? ""),
+    confirmationMethod: String(row.confirmationMethod ?? ""),
+    confirmedAt: row.confirmedAt
+      ? new Date(String(row.confirmedAt)).toLocaleString("zh-CN", { hour12: false })
+      : "",
+  };
+}
+
+export async function getIncidentWorkspaceView(pageInput = 1, pageSize = 10) {
   const employees = await getEmployeesCollection();
   const devices = await getDevicesCollection();
   const incidents = await getIncidentsCollection();
 
-  const [employeeRows, incidentRows, repairingDeviceRows] = await Promise.all([
+  const recordQuery = { workflowType: "employee_incident" };
+  const [employeeRows, recordTotal, incidentRows, repairingDeviceRows] = await Promise.all([
     employees.find({ status: "在职" }).sort({ updatedAt: -1 }).limit(100).toArray(),
-    incidents.find({ workflowType: "employee_incident" }).sort({ updatedAt: -1 }).limit(120).toArray(),
+    incidents.countDocuments(recordQuery),
+    incidents.find(recordQuery).sort({ updatedAt: -1 }).skip((pageInput - 1) * pageSize).limit(pageSize).toArray(),
     devices.find({ status: "修理中" }).sort({ updatedAt: -1 }).limit(60).toArray(),
   ]);
   const employeeCodes = employeeRows.map((row) => String(row.employeeCode ?? "")).filter(Boolean);
@@ -84,31 +106,16 @@ export async function getIncidentWorkspaceView() {
     };
   });
 
-  const records = incidentRows.map((row) => ({
-    id: String((row._id as ObjectId).toString()),
-    employeeCode: String(row.employeeCode ?? ""),
-    employeeName: String(row.employeeName ?? ""),
-    department: String(row.department ?? ""),
-    deviceCode: String(row.assetCode ?? ""),
-    deviceTitle: String(row.deviceTitle ?? ""),
-    type: String(row.type ?? ""),
-    status: String(row.status ?? ""),
-    description: String(row.description ?? ""),
-    confirmUrl: String(row.confirmUrl ?? ""),
-    confirmationMethod: String(row.confirmationMethod ?? ""),
-    confirmedAt: row.confirmedAt
-      ? new Date(String(row.confirmedAt)).toLocaleString("zh-CN", { hour12: false })
-      : "",
-  }));
-
+  const records = incidentRows.map((row) => mapIncidentRecord(row as Record<string, unknown>));
   const summary = {
-    pending: records.filter((item) => item.status === "待员工确认").length,
+    pending: await incidents.countDocuments({ workflowType: "employee_incident", status: "待员工确认" }),
     repairing: repairingDeviceRows.length,
-    lost: records.filter((item) => item.type === "丢失").length,
+    lost: await incidents.countDocuments({ workflowType: "employee_incident", type: "丢失" }),
   };
 
   const confirmedByDevice = new Map(
-    records
+    (await incidents.find({ workflowType: "employee_incident", status: "已确认" }).toArray())
+      .map((row) => mapIncidentRecord(row as Record<string, unknown>))
       .filter((item) => item.status === "已确认")
       .map((item) => [item.deviceCode, item] as const),
   );
@@ -131,5 +138,6 @@ export async function getIncidentWorkspaceView() {
     records,
     repairQueue,
     summary,
+    pagination: buildServerPagination(recordTotal, pageInput, pageSize),
   };
 }

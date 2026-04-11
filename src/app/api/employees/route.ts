@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
-import { getEmployeesView, getNextEmployeeCode } from "@/lib/employee-data";
+import { getEmployeesViewByDepartment, getNextEmployeeCode } from "@/lib/employee-data";
 import { normalizeEmployeeInput, type EmployeeInput } from "@/lib/employee-input";
 import { getEmployeesCollection } from "@/lib/mongodb";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const search = searchParams.get("search") || "";
-  const rows = await getEmployeesView(search);
-  return NextResponse.json(rows);
+  const rows = await getEmployeesViewByDepartment(search, "在职", "", 1, 200);
+  return NextResponse.json(rows.items);
 }
 
 export async function POST(request: Request) {

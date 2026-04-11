@@ -66,6 +66,98 @@ body { min-height: 100vh; }
   line-height: 20px;
   color: var(--text-secondary);
 }
+.desktop-loading {
+  min-height: 100vh;
+  padding: 32px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  background: var(--page-bg);
+}
+.desktop-loading__hero,
+.desktop-loading__panel,
+.desktop-loading__card {
+  border-radius: 24px;
+  border: 1px solid rgba(22, 50, 56, 0.08);
+  background: linear-gradient(180deg, #fffdfc 0%, #f7f3ec 100%);
+  box-shadow: var(--shadow-soft);
+}
+.desktop-loading__hero,
+.desktop-loading__panel {
+  padding: 24px 28px;
+}
+.desktop-loading__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+.desktop-loading__card {
+  height: 118px;
+}
+.desktop-loading__badge,
+.desktop-loading__title,
+.desktop-loading__subtitle,
+.desktop-loading__card,
+.desktop-loading__panel strong,
+.desktop-loading__panel span {
+  position: relative;
+  overflow: hidden;
+}
+.desktop-loading__badge::after,
+.desktop-loading__title::after,
+.desktop-loading__subtitle::after,
+.desktop-loading__card::after,
+.desktop-loading__panel strong::after,
+.desktop-loading__panel span::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(42, 167, 161, 0.18), transparent);
+  animation: loading-shimmer 1.35s infinite;
+}
+.desktop-loading__badge {
+  width: 88px;
+  height: 34px;
+  border-radius: 999px;
+  background: rgba(42, 167, 161, 0.12);
+}
+.desktop-loading__title {
+  width: 220px;
+  height: 28px;
+  margin-top: 16px;
+  border-radius: 12px;
+  background: rgba(22, 50, 56, 0.12);
+}
+.desktop-loading__subtitle {
+  width: 360px;
+  height: 18px;
+  margin-top: 10px;
+  border-radius: 10px;
+  background: rgba(75, 97, 101, 0.12);
+}
+.desktop-loading__panel strong,
+.desktop-loading__panel span {
+  display: block;
+  border-radius: 10px;
+  color: transparent;
+  background: rgba(22, 50, 56, 0.12);
+}
+.desktop-loading__panel strong {
+  width: 180px;
+  height: 22px;
+}
+.desktop-loading__panel span {
+  width: 320px;
+  height: 16px;
+  margin-top: 10px;
+  background: rgba(75, 97, 101, 0.12);
+}
+@keyframes loading-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
 a { color: inherit; text-decoration: none; }
 button, input, select, textarea { font: inherit; }
 button { border: 0; cursor: pointer; }

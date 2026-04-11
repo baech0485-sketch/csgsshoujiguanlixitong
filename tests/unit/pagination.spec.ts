@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizePageParam, paginateItems } from "@/lib/pagination";
+import { buildServerPagination, normalizePageParam, paginateItems } from "@/lib/pagination";
 
 describe("normalizePageParam", () => {
   it("应把非法页码归一化为第 1 页", () => {
@@ -36,5 +36,19 @@ describe("paginateItems", () => {
     expect(result.page).toBe(2);
     expect(result.totalPages).toBe(2);
     expect(result.items).toEqual([11, 12, 13]);
+  });
+});
+
+describe("buildServerPagination", () => {
+  it("应生成数据库分页所需的 skip/limit 和页码信息", () => {
+    const result = buildServerPagination(23, 2, 10);
+
+    expect(result.page).toBe(2);
+    expect(result.totalPages).toBe(3);
+    expect(result.totalItems).toBe(23);
+    expect(result.skip).toBe(10);
+    expect(result.limit).toBe(10);
+    expect(result.hasPrev).toBe(true);
+    expect(result.hasNext).toBe(true);
   });
 });

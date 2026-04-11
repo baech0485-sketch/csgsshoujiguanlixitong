@@ -16,6 +16,8 @@ export type DeviceFilters = {
   owner: string;
 };
 
+type DeviceMongoQuery = Record<string, unknown>;
+
 function normalized(value: string) {
   return value.trim().toLowerCase();
 }
@@ -39,4 +41,43 @@ export function applyDeviceFilters(rows: DeviceListRow[], filters: DeviceFilters
 
     return matchesSearch && matchesStatus && matchesBrand && matchesOwner;
   });
+}
+
+export function buildDeviceMongoQuery(filters: DeviceFilters): DeviceMongoQuery {
+  const query: DeviceMongoQuery = {};
+  const andConditions: DeviceMongoQuery[] = [];
+  const search = filters.search.trim();
+
+  if (filters.status) {
+    query.status = filters.status;
+  }
+
+  if (filters.owner) {
+    if (filters.owner === "库存") {
+      andConditions.push({
+        $or: [
+          { currentOwner: { $exists: false } },
+          { currentOwner: null },
+          { currentOwner: "" },
+        ],
+      });
+    } else {
+      query.currentOwner = filters.owner;
+    }
+  }
+
+  if (search) {
+    query.$or = [
+      { assetCode: { $regex: search, $options: "i" } },
+      { brand: { $regex: search, $options: "i" } },
+      { model: { $regex: search, $options: "i" } },
+      { currentOwner: { $regex: search, $options: "i" } },
+    ];
+  }
+
+  if (andConditions.length) {
+    query.$and = andConditions;
+  }
+
+  return query;
 }

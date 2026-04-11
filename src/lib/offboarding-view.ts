@@ -1,5 +1,6 @@
 import { buildOwnerDeviceMetrics } from "@/lib/device-ownership";
 import { getDevicesCollection, getEmployeesCollection, getOffboardingCollection } from "@/lib/mongodb";
+import { buildServerPagination } from "@/lib/pagination";
 
 export type OffboardingEmployeeOption = {
   employeeCode: string;
@@ -25,15 +26,32 @@ export type OffboardingCaseRow = {
   signedAt: string;
 };
 
-export async function getOffboardingPageView() {
+export type PaginatedOffboardingCases = {
+  items: OffboardingCaseRow[];
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+  hasPrev: boolean;
+  hasNext: boolean;
+};
+
+export async function getOffboardingPageView(pageInput = 1, pageSize = 10) {
   const employees = await getEmployeesCollection();
   const devices = await getDevicesCollection();
   const offboarding = await getOffboardingCollection();
 
-  const [employeeRows, caseRows] = await Promise.all([
+  const [employeeRows, caseTotal] = await Promise.all([
     employees.find({ status: "在职" }).sort({ updatedAt: -1 }).limit(100).toArray(),
-    offboarding.find().sort({ updatedAt: -1 }).limit(50).toArray(),
+    offboarding.countDocuments({}),
   ]);
+  const pagination = buildServerPagination(caseTotal, pageInput, pageSize);
+  const caseRows = await offboarding
+    .find()
+    .sort({ updatedAt: -1 })
+    .skip(pagination.skip)
+    .limit(pagination.limit)
+    .toArray();
   const employeeCodes = employeeRows.map((row) => String(row.employeeCode ?? "")).filter(Boolean);
   const ownedDeviceRows = employeeCodes.length
     ? await devices
@@ -74,19 +92,22 @@ export async function getOffboardingPageView() {
 
   return {
     employees: employeeOptions,
-    cases: caseRows.map((row) => ({
-      employeeCode: String(row.employeeCode ?? ""),
-      employeeName: String(row.employeeName ?? ""),
-      department: String(row.department ?? ""),
-      leavingDate: String(row.leavingDate ?? ""),
-      status: String(row.status ?? ""),
-      confirmationMethod: String(row.confirmationMethod ?? ""),
-      devices: Array.isArray(row.devices) ? row.devices.map((item) => ({
-        deviceCode: String((item as { deviceCode?: string }).deviceCode ?? ""),
-        deviceTitle: String((item as { deviceTitle?: string }).deviceTitle ?? ""),
-      })) : [],
-      confirmUrl: String(row.confirmUrl ?? ""),
-      signedAt: row.signedAt ? new Date(String(row.signedAt)).toLocaleString("zh-CN", { hour12: false }) : "",
-    })),
+    cases: {
+      ...pagination,
+      items: caseRows.map((row) => ({
+        employeeCode: String(row.employeeCode ?? ""),
+        employeeName: String(row.employeeName ?? ""),
+        department: String(row.department ?? ""),
+        leavingDate: String(row.leavingDate ?? ""),
+        status: String(row.status ?? ""),
+        confirmationMethod: String(row.confirmationMethod ?? ""),
+        devices: Array.isArray(row.devices) ? row.devices.map((item) => ({
+          deviceCode: String((item as { deviceCode?: string }).deviceCode ?? ""),
+          deviceTitle: String((item as { deviceTitle?: string }).deviceTitle ?? ""),
+        })) : [],
+        confirmUrl: String(row.confirmUrl ?? ""),
+        signedAt: row.signedAt ? new Date(String(row.signedAt)).toLocaleString("zh-CN", { hour12: false }) : "",
+      })),
+    },
   };
 }

@@ -4,9 +4,9 @@ import { AssignmentWorkspace } from "@/components/assignment-workspace";
 import { DesktopShell } from "@/components/desktop-shell";
 import { PaginationNav } from "@/components/pagination-nav";
 import { Panel, StatusPill } from "@/components/ui";
-import { getApprovalsView } from "@/lib/approvals-view";
+import { getApprovalsSummary, getApprovalsView } from "@/lib/approvals-view";
 import { getAssignmentWorkspaceView } from "@/lib/assignment-view";
-import { normalizePageParam, paginateItems } from "@/lib/pagination";
+import { normalizePageParam } from "@/lib/pagination";
 
 type AssignmentsPageProps = {
   searchParams?: Promise<{
@@ -20,16 +20,12 @@ export default async function AssignmentsPage({ searchParams }: AssignmentsPageP
   const params = searchParams ? await searchParams : undefined;
   const search = params?.search?.trim() || "";
   const status = params?.status === "待领取" || params?.status === "已领取" ? params.status : "全部";
-  const [{ employees, devices }, approvals] = await Promise.all([
+  const page = normalizePageParam(params?.page);
+  const [{ employees, devices }, approvalsPage, approvalSummary] = await Promise.all([
     getAssignmentWorkspaceView(),
-    getApprovalsView(),
+    getApprovalsView(search, status, page, 10),
+    getApprovalsSummary(),
   ]);
-  const filteredApprovals = approvals.filter((item) => {
-    const matchesSearch = !search || item.employeeName.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = status === "全部" || item.status === status;
-    return matchesSearch && matchesStatus;
-  });
-  const paginated = paginateItems(filteredApprovals, normalizePageParam(params?.page), 10);
   const paginationBaseQuery = new URLSearchParams();
 
   if (search) {
@@ -50,8 +46,8 @@ export default async function AssignmentsPage({ searchParams }: AssignmentsPageP
   const summary = [
     ["在职员工", String(employees.length).padStart(2, "0"), "var(--line-teal-dark)"],
     ["待分配手机", String(devices.length).padStart(2, "0"), "var(--line-aqua)"],
-    ["待领取", String(approvals.filter((item) => item.status === "待领取").length).padStart(2, "0"), "var(--line-gold)"],
-    ["已领取", String(approvals.filter((item) => item.status === "已领取").length).padStart(2, "0"), "var(--line-info)"],
+    ["待领取", String(approvalSummary["待领取"] ?? 0).padStart(2, "0"), "var(--line-gold)"],
+    ["已领取", String(approvalSummary["已领取"] ?? 0).padStart(2, "0"), "var(--line-info)"],
   ];
 
   return (
@@ -78,12 +74,12 @@ export default async function AssignmentsPage({ searchParams }: AssignmentsPageP
           <AssignmentWorkspace employees={employees} devices={devices} />
           <Panel title="领取确认记录" subtitle="原审批中心内容已合并到这里，可直接筛选领取状态和回执结果" className="dashboard-panel">
             <ApprovalsFilters initialSearch={search} initialStatus={status} />
-            <ApprovalsManager approvals={paginated.items} totalApprovals={filteredApprovals.length} />
+            <ApprovalsManager approvals={approvalsPage.items} totalApprovals={approvalsPage.totalItems} />
             <PaginationNav
-              page={paginated.page}
-              totalPages={paginated.totalPages}
-              totalItems={paginated.totalItems}
-              pageSize={paginated.pageSize}
+              page={approvalsPage.page}
+              totalPages={approvalsPage.totalPages}
+              totalItems={approvalsPage.totalItems}
+              pageSize={approvalsPage.pageSize}
               hrefForPage={hrefForPage}
             />
           </Panel>

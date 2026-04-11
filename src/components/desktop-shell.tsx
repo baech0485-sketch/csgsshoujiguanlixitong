@@ -9,6 +9,7 @@ import {
   IncidentIcon,
   RecoveryIcon,
 } from "@/components/icons";
+import { SidebarPrefetch } from "@/components/sidebar-prefetch";
 import { DesktopUserChip } from "@/components/desktop-user-chip";
 import { LogoutButton } from "@/components/logout-button";
 import { desktopSidebarItems } from "@/lib/tokens";
@@ -36,6 +37,7 @@ export function DesktopShell({
 }) {
   return (
     <div className="desktop-screen">
+      <SidebarPrefetch activeHref={activeHref} />
       <aside className="desktop-sidebar">
         <Link href="/dashboard" className="sidebar-brand">
           <span className="sidebar-brand__eyebrow">呈尚策划</span>
@@ -47,7 +49,7 @@ export function DesktopShell({
             const Icon = iconMap[item.icon];
             const active = item.href === activeHref;
             return (
-              <Link key={item.href} href={item.href} className={`desktop-nav__item${active ? " is-active" : ""}`}>
+              <Link key={item.href} href={item.href} prefetch className={`desktop-nav__item${active ? " is-active" : ""}`}>
                 <Icon className="desktop-nav__icon" color={active ? "var(--text-inverse)" : "var(--accent-gold-soft)"} />
                 <span>{item.label}</span>
               </Link>

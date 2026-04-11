@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyDeviceFilters } from "@/lib/device-listing";
+import { applyDeviceFilters, buildDeviceMongoQuery } from "@/lib/device-listing";
 
 const sampleRows = [
   { code: "sj-18", model: "iPhone 14 Pro / 256G", owner: "李明", status: "已分配", date: "2026-04-06 14:32", tone: "selected" as const },
@@ -18,5 +18,20 @@ describe("applyDeviceFilters", () => {
     const rows = applyDeviceFilters(sampleRows, { search: "", status: "待分配", brand: "", owner: "" });
     expect(rows).toHaveLength(1);
     expect(rows[0]?.status).toBe("待分配");
+  });
+});
+
+describe("buildDeviceMongoQuery", () => {
+  it("应生成状态、责任人和搜索关键字的数据库查询条件", () => {
+    const query = buildDeviceMongoQuery({
+      search: "sj-01",
+      status: "待分配",
+      brand: "",
+      owner: "库存",
+    });
+
+    expect(query.status).toBe("待分配");
+    expect(query.$or).toHaveLength(4);
+    expect(query.$and).toBeDefined();
   });
 });

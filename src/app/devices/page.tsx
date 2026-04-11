@@ -7,32 +7,73 @@ import { DeviceEntryModal } from "@/components/device-entry-modal";
 import { DesktopShell } from "@/components/desktop-shell";
 import { Panel, PrimaryButton } from "@/components/ui";
 import { getNextDeviceCode } from "@/lib/device-data";
-import { applyDeviceFilters, inferBrand, type DeviceListRow } from "@/lib/device-listing";
+import { formatBeijingDateTime } from "@/lib/date-time";
+import { buildDeviceMongoQuery, inferBrand, type DeviceFilters, type DeviceListRow } from "@/lib/device-listing";
 import { getDevicesCollection } from "@/lib/mongodb";
-import { normalizePageParam, paginateItems } from "@/lib/pagination";
+import { buildServerPagination, normalizePageParam } from "@/lib/pagination";
 import { getPublicBaseUrl } from "@/lib/public-base-url";
 
 type DevicesPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-async function getDeviceRows(): Promise<DeviceListRow[]> {
+function mapDeviceRow(row: Record<string, unknown>): DeviceListRow {
+  return {
+    code: String(row.assetCode ?? ""),
+    model: `${String(row.brand ?? "")} ${String(row.model ?? "")} / ${String(row.storage ?? "")}`.trim(),
+    owner: row.currentOwner ? String(row.currentOwner) : "库存",
+    status: String(row.status ?? "待分配"),
+    date: formatBeijingDateTime(row.updatedAt ? String(row.updatedAt) : ""),
+    tone: "selected",
+    brand: String(row.brand ?? ""),
+    photoDataUrl: row.photoDataUrl ? String(row.photoDataUrl) : "",
+  };
+}
+
+async function getDevicePageData(filters: DeviceFilters, pageInput: number, selectedCode: string) {
   try {
     const devices = await getDevicesCollection();
-    const rows = await devices.find().sort({ updatedAt: -1 }).limit(50).toArray();
+    const query = buildDeviceMongoQuery(filters);
+    const totalItems = await devices.countDocuments(query);
+    const pagination = buildServerPagination(totalItems, pageInput, 10);
+    const rows = await devices
+      .find(query)
+      .sort({ updatedAt: -1 })
+      .skip(pagination.skip)
+      .limit(pagination.limit)
+      .toArray();
+    const ownerRows = await devices
+      .aggregate([
+        {
+          $project: {
+            owner: {
+              $cond: [
+                { $or: [{ $eq: ["$currentOwner", null] }, { $eq: ["$currentOwner", ""] }] },
+                "库存",
+                "$currentOwner",
+              ],
+            },
+          },
+        },
+        { $group: { _id: "$owner" } },
+        { $sort: { _id: 1 } },
+      ])
+      .toArray();
+    const selectedRow = selectedCode ? await devices.findOne({ assetCode: selectedCode }) : null;
 
-    return rows.map((row) => ({
-      code: String(row.assetCode ?? ""),
-      model: `${String(row.brand ?? "")} ${String(row.model ?? "")} / ${String(row.storage ?? "")}`.trim(),
-      owner: row.currentOwner ? String(row.currentOwner) : "库存",
-      status: String(row.status ?? "待分配"),
-      date: row.updatedAt ? new Date(String(row.updatedAt)).toISOString().slice(0, 16).replace("T", " ") : "",
-      tone: "selected",
-      brand: String(row.brand ?? ""),
-      photoDataUrl: row.photoDataUrl ? String(row.photoDataUrl) : "",
-    }));
+    return {
+      rows: rows.map((row) => mapDeviceRow(row as Record<string, unknown>)),
+      owners: ownerRows.map((row) => String(row._id ?? "")).filter(Boolean),
+      selectedRow: selectedRow ? mapDeviceRow(selectedRow as Record<string, unknown>) : null,
+      pagination,
+    };
   } catch {
-    return [];
+    return {
+      rows: [] as DeviceListRow[],
+      owners: [] as string[],
+      selectedRow: null,
+      pagination: buildServerPagination(0, pageInput, 10),
+    };
   }
 }
 
@@ -42,18 +83,24 @@ export default async function DevicesPage({ searchParams }: DevicesPageProps) {
   const nextDeviceCode = await getNextDeviceCode();
   const warehousingDate = new Date().toISOString().slice(0, 10);
   const publicBaseUrl = await getPublicBaseUrl();
-  const allRows = await getDeviceRows();
   const filters = {
     search: String(params.search ?? ""),
     status: String(params.status ?? ""),
     owner: String(params.owner ?? ""),
   };
-  const rows = applyDeviceFilters(allRows, { ...filters, brand: "" });
-  const paginated = paginateItems(rows, normalizePageParam(String(params.page ?? "")), 10);
+  const currentPage = normalizePageParam(String(params.page ?? ""));
+  const selectedCode = String(params.selected ?? "");
+  const { rows, owners, selectedRow, pagination } = await getDevicePageData(
+    { ...filters, brand: "" },
+    currentPage,
+    selectedCode,
+  );
+  const paginated = {
+    ...pagination,
+    items: rows,
+  };
   const visibleRows = paginated.items;
-  const selectedCode = String(params.selected ?? visibleRows[0]?.code ?? "");
-  const selected = visibleRows.find((row) => row.code === selectedCode) || visibleRows[0] || null;
-  const owners = [...new Set(allRows.map((row) => row.owner).filter(Boolean))];
+  const selected = visibleRows.find((row) => row.code === selectedCode) || selectedRow || visibleRows[0] || null;
   const queryBase = new URLSearchParams();
   if (filters.search) queryBase.set("search", filters.search);
   if (filters.status) queryBase.set("status", filters.status);
@@ -72,7 +119,7 @@ export default async function DevicesPage({ searchParams }: DevicesPageProps) {
           />
         </Panel>
         <section className="device-grid">
-          <Panel title="设备列表" subtitle={`当前共 ${rows.length} 条记录 · 每页 10 条`} className="device-table-panel">
+          <Panel title="设备列表" subtitle={`当前共 ${paginated.totalItems} 条记录 · 每页 10 条`} className="device-table-panel">
             <div className="device-table__head"><span>手机编号</span><span>设备信息</span><span>责任人</span><span>状态</span><span>更新时间</span></div>
             <div className="device-table__body">
               {visibleRows.length ? visibleRows.map((row) => {

@@ -13,6 +13,7 @@ test("离职回收页应按员工带出名下设备并生成归还确认链接",
   await page.getByLabel("部门", { exact: true }).selectOption("宜昌销售部");
   await page.getByRole("button", { name: "新增员工" }).click();
   const employeeCardSeed = page.getByRole("article").filter({ hasText: employeeName });
+  await expect(employeeCardSeed.first()).toBeVisible({ timeout: 15000 });
   const employeeCode = (await employeeCardSeed.locator("p").first().textContent())?.split("·")[0]?.trim() || "";
 
   await page.goto("/devices?modal=new");
@@ -37,6 +38,7 @@ test("离职回收页应按员工带出名下设备并生成归还确认链接",
     page.getByRole("button", { name: "提交分配" }).click(),
   ]);
 
+  await page.goto("/assignments");
   const assignmentCard = page.getByRole("article").filter({ hasText: employeeName }).first();
   await expect(assignmentCard).toBeVisible({ timeout: 15000 });
 

@@ -3,7 +3,7 @@ import { PaginationNav } from "@/components/pagination-nav";
 import { EmployeesManager } from "@/components/employees-manager";
 import { DesktopShell } from "@/components/desktop-shell";
 import { getEmployeesViewByDepartment, getEmployeeSummary, getNextEmployeeCode } from "@/lib/employee-data";
-import { normalizePageParam, paginateItems } from "@/lib/pagination";
+import { normalizePageParam } from "@/lib/pagination";
 
 type EmployeesPageProps = {
   searchParams?: Promise<{
@@ -22,11 +22,11 @@ export default async function EmployeesPage({ searchParams }: EmployeesPageProps
     ? params.department.trim()
     : "";
   const nextEmployeeCode = await getNextEmployeeCode();
-  const [employees, summary] = await Promise.all([
-    getEmployeesViewByDepartment(search, status, department),
+  const page = normalizePageParam(params?.page);
+  const [employeePage, summary] = await Promise.all([
+    getEmployeesViewByDepartment(search, status, department, page, 10),
     getEmployeeSummary(),
   ]);
-  const paginated = paginateItems(employees, normalizePageParam(params?.page), 10);
   const baseQuery = new URLSearchParams();
   if (search) baseQuery.set("search", search);
   if (status) baseQuery.set("status", status);
@@ -39,15 +39,15 @@ export default async function EmployeesPage({ searchParams }: EmployeesPageProps
           <EmployeesFilters initialSearch={search} initialStatus={status} initialDepartment={department} />
         </section>
         <EmployeesManager
-          visibleEmployees={paginated.items}
+          visibleEmployees={employeePage.items}
           nextEmployeeCode={nextEmployeeCode}
           summary={summary}
         />
         <PaginationNav
-          page={paginated.page}
-          totalPages={paginated.totalPages}
-          totalItems={paginated.totalItems}
-          pageSize={paginated.pageSize}
+          page={employeePage.page}
+          totalPages={employeePage.totalPages}
+          totalItems={employeePage.totalItems}
+          pageSize={employeePage.pageSize}
           hrefForPage={(page) => {
             const query = new URLSearchParams(baseQuery);
             if (page > 1) query.set("page", String(page));

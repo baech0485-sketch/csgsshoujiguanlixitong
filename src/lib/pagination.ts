@@ -23,3 +23,20 @@ export function paginateItems<T>(items: T[], pageInput: number, pageSize = 10) {
     hasNext: page < totalPages,
   };
 }
+
+export function buildServerPagination(totalItems: number, pageInput: number, pageSize = 10) {
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const page = Math.min(Math.max(1, pageInput), totalPages);
+  const skip = (page - 1) * pageSize;
+
+  return {
+    page,
+    pageSize,
+    totalItems,
+    totalPages,
+    skip,
+    limit: pageSize,
+    hasPrev: page > 1,
+    hasNext: page < totalPages,
+  };
+}

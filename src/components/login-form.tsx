@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { EyeIcon, EyeOffIcon } from "@/components/icons";
 import { validateFrontendAdminPassword } from "@/lib/admin-account";
 import {
@@ -21,6 +21,10 @@ export function LoginForm() {
   const [rememberPassword, setRememberPassword] = useState(initialLoginState.current.rememberPassword);
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    router.prefetch("/dashboard");
+  }, [router]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
