@@ -1,3 +1,4 @@
+import { unstable_noStore as noStore } from "next/cache";
 import {
   getAdminUsersCollection,
   getApprovalsCollection,
@@ -59,6 +60,8 @@ function fallbackSnapshot(): DashboardSnapshot {
 }
 
 export async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
+  noStore();
+
   try {
     const [devices, employees, approvals, offboarding, incidents, admins, events] = await Promise.all([
       getDevicesCollection(),

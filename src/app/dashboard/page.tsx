@@ -2,6 +2,8 @@ import { DesktopShell } from "@/components/desktop-shell";
 import { Panel, StatusPill } from "@/components/ui";
 import { getDashboardSnapshot } from "@/lib/dashboard-data";
 
+export const dynamic = "force-dynamic";
+
 function toneForStatus(status: string) {
   if (status === "待分配") return "success";
   if (status === "已分配") return "selected";
