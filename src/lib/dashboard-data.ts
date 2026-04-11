@@ -1,4 +1,5 @@
 import { unstable_noStore as noStore } from "next/cache";
+import { buildStatusCountMap } from "@/lib/device-ownership";
 import {
   getAdminUsersCollection,
   getApprovalsCollection,
@@ -74,39 +75,31 @@ export async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
     ]);
 
     const [
-      deviceTotal,
-      assignedCount,
-      pendingCount,
-      repairingCount,
-      activeEmployees,
-      inactiveEmployees,
-      pendingReceipt,
-      receivedCount,
-      pendingReturns,
-      returnedCount,
-      pendingIncidents,
-      confirmedIncidents,
-      incidentTotal,
-      employeeTotal,
+      deviceStatusRows,
+      employeeStatusRows,
+      approvalStatusRows,
+      offboardingStatusRows,
+      incidentStatusRows,
       adminCount,
       latestDevices,
       recentEvents,
       repairingOwnersRows,
     ] = await Promise.all([
-      devices.countDocuments({}),
-      devices.countDocuments({ status: "已分配" }),
-      devices.countDocuments({ status: "待分配" }),
-      devices.countDocuments({ status: "修理中" }),
-      employees.countDocuments({ status: "在职" }),
-      employees.countDocuments({ status: "离职" }),
-      approvals.countDocuments({ workflowType: "assignment_receipt", status: "待领取" }),
-      approvals.countDocuments({ workflowType: "assignment_receipt", status: "已领取" }),
-      offboarding.countDocuments({ status: "待回收" }),
-      offboarding.countDocuments({ status: "已回收" }),
-      incidents.countDocuments({ workflowType: "employee_incident", status: "待员工确认" }),
-      incidents.countDocuments({ workflowType: "employee_incident", status: "已确认" }),
-      incidents.countDocuments({}),
-      employees.countDocuments({}),
+      devices.aggregate([{ $group: { _id: "$status", count: { $sum: 1 } } }]).toArray(),
+      employees.aggregate([{ $group: { _id: "$status", count: { $sum: 1 } } }]).toArray(),
+      approvals
+        .aggregate([
+          { $match: { workflowType: "assignment_receipt" } },
+          { $group: { _id: "$status", count: { $sum: 1 } } },
+        ])
+        .toArray(),
+      offboarding.aggregate([{ $group: { _id: "$status", count: { $sum: 1 } } }]).toArray(),
+      incidents
+        .aggregate([
+          { $match: { workflowType: "employee_incident" } },
+          { $group: { _id: "$status", count: { $sum: 1 } } },
+        ])
+        .toArray(),
       admins.countDocuments({ active: true }),
       devices.find().sort({ updatedAt: -1 }).limit(4).project({ assetCode: 1, brand: 1, model: 1, storage: 1, status: 1 }).toArray(),
       events.find().sort({ createdAt: -1 }).limit(6).toArray(),
@@ -115,6 +108,26 @@ export async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
         .project({ currentOwnerCode: 1 })
         .toArray(),
     ]);
+    const deviceStatusCounts = buildStatusCountMap(deviceStatusRows);
+    const employeeStatusCounts = buildStatusCountMap(employeeStatusRows);
+    const approvalStatusCounts = buildStatusCountMap(approvalStatusRows);
+    const offboardingStatusCounts = buildStatusCountMap(offboardingStatusRows);
+    const incidentStatusCounts = buildStatusCountMap(incidentStatusRows);
+
+    const deviceTotal = Object.values(deviceStatusCounts).reduce((sum, value) => sum + value, 0);
+    const assignedCount = deviceStatusCounts["已分配"] ?? 0;
+    const pendingCount = deviceStatusCounts["待分配"] ?? 0;
+    const repairingCount = deviceStatusCounts["修理中"] ?? 0;
+    const activeEmployees = employeeStatusCounts["在职"] ?? 0;
+    const inactiveEmployees = employeeStatusCounts["离职"] ?? 0;
+    const employeeTotal = Object.values(employeeStatusCounts).reduce((sum, value) => sum + value, 0);
+    const pendingReceipt = approvalStatusCounts["待领取"] ?? 0;
+    const receivedCount = approvalStatusCounts["已领取"] ?? 0;
+    const pendingReturns = offboardingStatusCounts["待回收"] ?? 0;
+    const returnedCount = offboardingStatusCounts["已回收"] ?? 0;
+    const pendingIncidents = incidentStatusCounts["待员工确认"] ?? 0;
+    const confirmedIncidents = incidentStatusCounts["已确认"] ?? 0;
+    const incidentTotal = Object.values(incidentStatusCounts).reduce((sum, value) => sum + value, 0);
 
     const repairingOwners = new Set(
       repairingOwnersRows

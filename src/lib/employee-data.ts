@@ -1,4 +1,5 @@
 import { buildNextEmployeeCode } from "@/lib/employee-input";
+import { buildOwnerDeviceMetrics } from "@/lib/device-ownership";
 import { getDevicesCollection, getEmployeesCollection } from "@/lib/mongodb";
 
 export type EmployeeViewRow = {
@@ -36,33 +37,44 @@ export async function getEmployeesView(search = "", status = "在职"): Promise<
   }
 
   const rows = await employees.find(query).sort({ updatedAt: -1 }).limit(200).toArray();
+  const employeeCodes = rows.map((row) => String(row.employeeCode ?? "")).filter(Boolean);
+  const deviceRows = employeeCodes.length
+    ? await devices
+        .find(
+          {
+            currentOwnerCode: { $in: employeeCodes },
+            status: { $in: ["已分配", "修理中"] },
+          },
+          {
+            projection: {
+              assetCode: 1,
+              brand: 1,
+              model: 1,
+              storage: 1,
+              currentOwnerCode: 1,
+              status: 1,
+            },
+          },
+        )
+        .toArray()
+    : [];
+  const metrics = buildOwnerDeviceMetrics(deviceRows);
 
-  return Promise.all(
-    rows.map(async (row) => {
-      const employeeCode = String(row.employeeCode ?? "");
-      const [deviceCount, repairingCount] = await Promise.all([
-        devices.countDocuments({
-          currentOwnerCode: employeeCode,
-          status: "已分配",
-        }),
-        devices.countDocuments({
-          currentOwnerCode: employeeCode,
-          status: "修理中",
-        }),
-      ]);
+  return rows.map((row) => {
+    const employeeCode = String(row.employeeCode ?? "");
+    const ownerMetrics = metrics.get(employeeCode);
 
-      return {
-        employeeCode,
-        name: String(row.name ?? ""),
-        department: String(row.department ?? ""),
-        phone: String(row.phone ?? ""),
-        title: String(row.title ?? ""),
-        status: String(row.status ?? "在职"),
-        deviceCount,
-        repairingCount,
-      };
-    }),
-  );
+    return {
+      employeeCode,
+      name: String(row.name ?? ""),
+      department: String(row.department ?? ""),
+      phone: String(row.phone ?? ""),
+      title: String(row.title ?? ""),
+      status: String(row.status ?? "在职"),
+      deviceCount: ownerMetrics?.assignedCount ?? 0,
+      repairingCount: ownerMetrics?.repairingCount ?? 0,
+    };
+  });
 }
 
 export async function getEmployeesViewByDepartment(search = "", status = "在职", department = ""): Promise<EmployeeViewRow[]> {
@@ -87,33 +99,44 @@ export async function getEmployeesViewByDepartment(search = "", status = "在职
   }
 
   const rows = await employees.find(query).sort({ updatedAt: -1 }).limit(200).toArray();
+  const employeeCodes = rows.map((row) => String(row.employeeCode ?? "")).filter(Boolean);
+  const deviceRows = employeeCodes.length
+    ? await devices
+        .find(
+          {
+            currentOwnerCode: { $in: employeeCodes },
+            status: { $in: ["已分配", "修理中"] },
+          },
+          {
+            projection: {
+              assetCode: 1,
+              brand: 1,
+              model: 1,
+              storage: 1,
+              currentOwnerCode: 1,
+              status: 1,
+            },
+          },
+        )
+        .toArray()
+    : [];
+  const metrics = buildOwnerDeviceMetrics(deviceRows);
 
-  return Promise.all(
-    rows.map(async (row) => {
-      const employeeCode = String(row.employeeCode ?? "");
-      const [deviceCount, repairingCount] = await Promise.all([
-        devices.countDocuments({
-          currentOwnerCode: employeeCode,
-          status: "已分配",
-        }),
-        devices.countDocuments({
-          currentOwnerCode: employeeCode,
-          status: "修理中",
-        }),
-      ]);
+  return rows.map((row) => {
+    const employeeCode = String(row.employeeCode ?? "");
+    const ownerMetrics = metrics.get(employeeCode);
 
-      return {
-        employeeCode,
-        name: String(row.name ?? ""),
-        department: String(row.department ?? ""),
-        phone: String(row.phone ?? ""),
-        title: String(row.title ?? ""),
-        status: String(row.status ?? "在职"),
-        deviceCount,
-        repairingCount,
-      };
-    }),
-  );
+    return {
+      employeeCode,
+      name: String(row.name ?? ""),
+      department: String(row.department ?? ""),
+      phone: String(row.phone ?? ""),
+      title: String(row.title ?? ""),
+      status: String(row.status ?? "在职"),
+      deviceCount: ownerMetrics?.assignedCount ?? 0,
+      repairingCount: ownerMetrics?.repairingCount ?? 0,
+    };
+  });
 }
 
 export async function getNextEmployeeCode() {

@@ -1,3 +1,4 @@
+import { buildOwnerDeviceMetrics } from "@/lib/device-ownership";
 import { getDevicesCollection, getEmployeesCollection, getOffboardingCollection } from "@/lib/mongodb";
 
 export type OffboardingEmployeeOption = {
@@ -33,24 +34,43 @@ export async function getOffboardingPageView() {
     employees.find({ status: "在职" }).sort({ updatedAt: -1 }).limit(100).toArray(),
     offboarding.find().sort({ updatedAt: -1 }).limit(50).toArray(),
   ]);
-
-  const employeeOptions = await Promise.all(
-    employeeRows.map(async (row) => {
-      const ownedDevices = await devices
-        .find({ currentOwnerCode: String(row.employeeCode ?? ""), status: "已分配" })
+  const employeeCodes = employeeRows.map((row) => String(row.employeeCode ?? "")).filter(Boolean);
+  const ownedDeviceRows = employeeCodes.length
+    ? await devices
+        .find(
+          {
+            currentOwnerCode: { $in: employeeCodes },
+            status: "已分配",
+          },
+          {
+            projection: {
+              assetCode: 1,
+              brand: 1,
+              model: 1,
+              storage: 1,
+              currentOwnerCode: 1,
+              status: 1,
+            },
+          },
+        )
         .sort({ updatedAt: -1 })
-        .toArray();
+        .toArray()
+    : [];
+  const ownerMetrics = buildOwnerDeviceMetrics(ownedDeviceRows);
 
-      return {
-        employeeCode: String(row.employeeCode ?? ""),
-        label: `${String(row.employeeCode ?? "")} · ${String(row.name ?? "")} · ${String(row.department ?? "")}`,
-        devices: ownedDevices.map((device) => ({
-          deviceCode: String(device.assetCode ?? ""),
-          deviceTitle: `${String(device.brand ?? "")} ${String(device.model ?? "")} · ${String(device.storage ?? "")}`.trim(),
-        })),
-      };
-    }),
-  );
+  const employeeOptions = employeeRows.map((row) => {
+    const employeeCode = String(row.employeeCode ?? "");
+    const metrics = ownerMetrics.get(employeeCode);
+
+    return {
+      employeeCode,
+      label: `${employeeCode} · ${String(row.name ?? "")} · ${String(row.department ?? "")}`,
+      devices: metrics?.devices.map((device) => ({
+        deviceCode: device.deviceCode,
+        deviceTitle: device.deviceTitle,
+      })) ?? [],
+    };
+  });
 
   return {
     employees: employeeOptions,

@@ -1,4 +1,5 @@
 import { ObjectId } from "mongodb";
+import { buildOwnerDeviceMetrics } from "@/lib/device-ownership";
 import { getDevicesCollection, getEmployeesCollection, getIncidentsCollection } from "@/lib/mongodb";
 
 export type IncidentEmployeeOption = {
@@ -51,25 +52,37 @@ export async function getIncidentWorkspaceView() {
     incidents.find({ workflowType: "employee_incident" }).sort({ updatedAt: -1 }).limit(120).toArray(),
     devices.find({ status: "修理中" }).sort({ updatedAt: -1 }).limit(60).toArray(),
   ]);
-
-  const employeeOptions = await Promise.all(
-    employeeRows.map(async (row) => {
-      const ownedDevices = await devices
-        .find({ currentOwnerCode: String(row.employeeCode ?? "") })
+  const employeeCodes = employeeRows.map((row) => String(row.employeeCode ?? "")).filter(Boolean);
+  const ownedDeviceRows = employeeCodes.length
+    ? await devices
+        .find(
+          { currentOwnerCode: { $in: employeeCodes } },
+          {
+            projection: {
+              assetCode: 1,
+              brand: 1,
+              model: 1,
+              storage: 1,
+              currentOwnerCode: 1,
+              status: 1,
+            },
+          },
+        )
         .sort({ updatedAt: -1 })
-        .toArray();
+        .toArray()
+    : [];
+  const ownerMetrics = buildOwnerDeviceMetrics(ownedDeviceRows);
 
-      return {
-        employeeCode: String(row.employeeCode ?? ""),
-        label: `${String(row.name ?? "")} · ${String(row.employeeCode ?? "")} · ${String(row.department ?? "")}`,
-        devices: ownedDevices.map((device) => ({
-          deviceCode: String(device.assetCode ?? ""),
-          deviceTitle: `${String(device.brand ?? "")} ${String(device.model ?? "")} · ${String(device.storage ?? "")}`.trim(),
-          status: String(device.status ?? ""),
-        })),
-      };
-    }),
-  );
+  const employeeOptions = employeeRows.map((row) => {
+    const employeeCode = String(row.employeeCode ?? "");
+    const metrics = ownerMetrics.get(employeeCode);
+
+    return {
+      employeeCode,
+      label: `${String(row.name ?? "")} · ${employeeCode} · ${String(row.department ?? "")}`,
+      devices: metrics?.devices ?? [],
+    };
+  });
 
   const records = incidentRows.map((row) => ({
     id: String((row._id as ObjectId).toString()),
