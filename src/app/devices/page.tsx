@@ -11,7 +11,6 @@ import { formatBeijingDateTime } from "@/lib/date-time";
 import { buildDeviceMongoQuery, inferBrand, type DeviceFilters, type DeviceListRow } from "@/lib/device-listing";
 import { getDevicesCollection } from "@/lib/mongodb";
 import { buildServerPagination, normalizePageParam } from "@/lib/pagination";
-import { getPublicBaseUrl } from "@/lib/public-base-url";
 
 type DevicesPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -80,9 +79,7 @@ async function getDevicePageData(filters: DeviceFilters, pageInput: number, sele
 export default async function DevicesPage({ searchParams }: DevicesPageProps) {
   const params = await searchParams;
   const showModal = params.modal === "new";
-  const nextDeviceCode = await getNextDeviceCode();
   const warehousingDate = new Date().toISOString().slice(0, 10);
-  const publicBaseUrl = await getPublicBaseUrl();
   const filters = {
     search: String(params.search ?? ""),
     status: String(params.status ?? ""),
@@ -95,6 +92,7 @@ export default async function DevicesPage({ searchParams }: DevicesPageProps) {
     currentPage,
     selectedCode,
   );
+  const nextDeviceCode = showModal ? await getNextDeviceCode() : "";
   const paginated = {
     ...pagination,
     items: rows,
@@ -115,7 +113,7 @@ export default async function DevicesPage({ searchParams }: DevicesPageProps) {
             initialStatus={filters.status}
             initialOwner={filters.owner}
             owners={owners}
-            entryLink={`${publicBaseUrl}/m/device-entry`}
+            entryLink="/m/device-entry"
           />
         </Panel>
         <section className="device-grid">

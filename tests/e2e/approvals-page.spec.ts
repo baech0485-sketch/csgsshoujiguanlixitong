@@ -133,3 +133,58 @@ test("领用分配工作台应在员工勾选确认后同步显示已领取结�
   await expect(page).toHaveURL(new RegExp(`search=${encodeURIComponent(employeeName)}`));
   await expect(page.getByRole("article").filter({ hasText: employeeName })).toHaveCount(1);
 });
+
+test("领取确认记录应支持删除待领取记录并回退手机状态", async ({ page }) => {
+  await loginAsAdmin(page);
+  await page.waitForURL(/\/dashboard$/, { timeout: 15000 });
+
+  const suffix = String(Date.now()).slice(-6);
+  const employeeName = `删除记录员工${suffix}`;
+
+  await page.goto("/employees");
+  await page.getByLabel("姓名").fill(employeeName);
+  await page.getByLabel("部门", { exact: true }).selectOption("武汉销售部");
+  await page.getByRole("button", { name: "新增员工" }).click();
+  const employeeCardSeed = page.getByRole("article").filter({ hasText: employeeName });
+  await expect(employeeCardSeed.first()).toBeVisible({ timeout: 15000 });
+  const employeeCode = (await employeeCardSeed.locator("p").first().textContent())?.split("·")[0]?.trim() || "";
+
+  await page.goto("/devices?modal=new");
+  const deviceCode = await page.getByLabel("手机编号").inputValue();
+  await page.getByRole("textbox", { name: "品牌" }).fill("Apple");
+  await page.getByRole("textbox", { name: "型号" }).fill("iPhone Delete Flow");
+  await page.getByRole("textbox", { name: "存储容量" }).fill("128G");
+  await page.getByRole("textbox", { name: "序列号" }).fill(`SN-${Date.now()}`);
+  await page.getByLabel("上传手机图片").setInputFiles({
+    name: "phone.png",
+    mimeType: "image/png",
+    buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+cC1UAAAAASUVORK5CYII=", "base64"),
+  });
+  await page.getByRole("button", { name: "提交录入" }).click();
+  await page.waitForURL(/\/devices\?selected=sj-\d{2,}$/);
+
+  await page.goto("/assignments");
+  await page.getByLabel("选择员工").selectOption(employeeCode);
+  await page.getByLabel(`选择设备 ${deviceCode}`).check();
+  await Promise.all([
+    page.waitForResponse((response) => response.url().includes("/api/assignments/execute") && response.request().method() === "POST" && response.status() === 201),
+    page.getByRole("button", { name: "提交分配" }).click(),
+  ]);
+
+  await page.goto("/assignments");
+  const approvalCard = page.getByRole("article").filter({ hasText: employeeName }).first();
+  await expect(approvalCard).toBeVisible({ timeout: 15000 });
+
+  page.once("dialog", async (dialog) => {
+    await dialog.accept();
+  });
+  await Promise.all([
+    page.waitForResponse((response) => /\/api\/approvals\/.+/.test(response.url()) && response.request().method() === "DELETE" && response.status() === 200),
+    approvalCard.getByRole("button", { name: "删除记录" }).click(),
+  ]);
+
+  await expect(page.getByRole("article").filter({ hasText: employeeName })).toHaveCount(0);
+
+  await page.goto(`/devices?search=${deviceCode}`);
+  await expect(page.getByText("当前状态：待分配")).toBeVisible();
+});

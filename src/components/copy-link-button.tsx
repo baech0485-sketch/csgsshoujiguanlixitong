@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 async function fallbackCopy(value: string) {
   const textarea = document.createElement("textarea");
@@ -25,14 +25,19 @@ export function CopyLinkButton({
   variant?: "inline" | "button";
 }) {
   const [copied, setCopied] = useState(false);
+  const resolvedValue = useMemo(() => {
+    if (typeof window === "undefined") return value;
+    if (!value.startsWith("/")) return value;
+    return `${window.location.origin}${value}`;
+  }, [value]);
 
   async function handleCopy() {
     setCopied(true);
     try {
       if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(value);
+        await navigator.clipboard.writeText(resolvedValue);
       } else {
-        await fallbackCopy(value);
+        await fallbackCopy(resolvedValue);
       }
     } catch {
       // 浏览器剪贴板被禁用时仍保留已复制反馈
@@ -45,7 +50,7 @@ export function CopyLinkButton({
       type="button"
       className={`copy-link-button copy-link-button--${variant}${copied ? " is-copied" : ""}`}
       aria-label={label}
-      data-link-value={value}
+      data-link-value={resolvedValue}
       onClick={handleCopy}
     >
       {copied ? "已复制" : label}

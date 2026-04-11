@@ -1,5 +1,9 @@
-import { CopyLinkButton } from "@/components/copy-link-button";
+"use client";
+
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
+import { CopyLinkButton } from "@/components/copy-link-button";
 import { StatusPill } from "@/components/ui";
 import type { ApprovalViewRow } from "@/lib/approvals-view";
 
@@ -10,10 +14,39 @@ export function ApprovalsManager({
   approvals: ApprovalViewRow[];
   totalApprovals: number;
 }) {
+  const router = useRouter();
+  const [message, setMessage] = useState("");
+  const [localApprovals, setLocalApprovals] = useState(approvals);
+  const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    setLocalApprovals(approvals);
+  }, [approvals]);
+
+  async function deleteRecord(id: string) {
+    const confirmed = window.confirm("确认删除这条领取确认记录吗？");
+    if (!confirmed) return;
+
+    setMessage("");
+    const response = await fetch(`/api/approvals/${id}`, {
+      method: "DELETE",
+    });
+    const payload = (await response.json()) as { message?: string };
+
+    if (!response.ok) {
+      setMessage(payload.message || "删除记录失败");
+      return;
+    }
+
+    setLocalApprovals((current) => current.filter((item) => item.id !== id));
+    startTransition(() => router.refresh());
+  }
+
   return (
     <div className="approval-list">
-      {totalApprovals ? <p className="panel__subtitle">当前共 {totalApprovals} 条确认记录，每页显示 10 条。</p> : null}
-      {approvals.length ? approvals.map((item) => (
+      {totalApprovals ? <p className="panel__subtitle">当前共 {localApprovals.length} 条确认记录，每页显示 10 条。</p> : null}
+      {message ? <p className="form-error">{message}</p> : null}
+      {localApprovals.length ? localApprovals.map((item) => (
         <article key={item.id} className="approval-card approval-card--rich">
           <div className="employee-card__top">
             <div>
@@ -30,7 +63,17 @@ export function ApprovalsManager({
             <CopyLinkButton label="领取确认链接" value={item.confirmUrl} />
             <span>{item.signedAt ? `确认时间 ${item.signedAt}` : "待员工确认"}</span>
           </div>
-          {item.confirmationMethod ? <StatusPill tone="info">{item.confirmationMethod}</StatusPill> : null}
+          <div className="approval-card__links">
+            {item.confirmationMethod ? <StatusPill tone="info">{item.confirmationMethod}</StatusPill> : <span />}
+            <button
+              type="button"
+              className="button button--ghost"
+              onClick={() => void deleteRecord(item.id)}
+              disabled={isPending}
+            >
+              {isPending ? "删除中..." : "删除记录"}
+            </button>
+          </div>
           {item.signatureImage ? (
             <Image className="approval-card__signature" src={item.signatureImage} alt={`${item.employeeName} 签字`} width={180} height={96} unoptimized />
           ) : null}
