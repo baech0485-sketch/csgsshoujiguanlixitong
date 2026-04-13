@@ -5,6 +5,14 @@ test("手机资产台账页应支持通过查询参数联动列表和右侧详�
   await loginAsAdmin(page);
   await page.waitForURL(/\/dashboard$/, { timeout: 15000 });
 
+  await page.goto("/devices");
+  const statusSection = page.locator(".device-status-section");
+  await expect(statusSection.getByText("手机状态", { exact: true })).toBeVisible();
+  await expect(statusSection.getByText("全部手机", { exact: true })).toBeVisible();
+  await expect(statusSection.getByText("待分配", { exact: true })).toBeVisible();
+  await expect(statusSection.getByText("已分配", { exact: true })).toBeVisible();
+  await expect(statusSection.getByText("修理中", { exact: true })).toBeVisible();
+
   await page.goto("/devices?modal=new");
   const uniqueCode = await page.getByLabel("手机编号").inputValue();
   await expect(page.getByLabel("手机编号")).toHaveValue(/sj-\d{2,}/);

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AssetStatusPill } from "@/components/asset-status-pill";
+import { DeviceStatusCards } from "@/components/device-status-cards";
 import { PaginationNav } from "@/components/pagination-nav";
 import { DevicePreviewPanel } from "@/components/device-preview-panel";
 import { DevicesFilters } from "@/components/devices-filters";
@@ -9,6 +10,8 @@ import { Panel } from "@/components/ui";
 import { getNextDeviceCode } from "@/lib/device-data";
 import { formatBeijingDateTime } from "@/lib/date-time";
 import { buildDeviceMongoQuery, type DeviceFilters, type DeviceListRow } from "@/lib/device-listing";
+import { buildStatusCountMap } from "@/lib/device-ownership";
+import { buildDeviceStatusCards } from "@/lib/device-status-summary";
 import { getDevicesCollection } from "@/lib/mongodb";
 import { buildServerPagination, normalizePageParam } from "@/lib/pagination";
 
@@ -35,36 +38,47 @@ async function getDevicePageData(filters: DeviceFilters, pageInput: number, sele
     const query = buildDeviceMongoQuery(filters);
     const totalItems = await devices.countDocuments(query);
     const pagination = buildServerPagination(totalItems, pageInput, 10);
-    const rows = await devices
-      .find(query)
-      .sort({ updatedAt: -1 })
-      .skip(pagination.skip)
-      .limit(pagination.limit)
-      .toArray();
-    const ownerRows = await devices
-      .aggregate([
-        {
-          $project: {
-            owner: {
-              $cond: [
-                { $or: [{ $eq: ["$currentOwner", null] }, { $eq: ["$currentOwner", ""] }] },
-                "库存",
-                "$currentOwner",
-              ],
+    const [rows, ownerRows, selectedRow, statusRows] = await Promise.all([
+      devices
+        .find(query)
+        .sort({ updatedAt: -1 })
+        .skip(pagination.skip)
+        .limit(pagination.limit)
+        .toArray(),
+      devices
+        .aggregate([
+          {
+            $project: {
+              owner: {
+                $cond: [
+                  { $or: [{ $eq: ["$currentOwner", null] }, { $eq: ["$currentOwner", ""] }] },
+                  "库存",
+                  "$currentOwner",
+                ],
+              },
             },
           },
-        },
-        { $group: { _id: "$owner" } },
-        { $sort: { _id: 1 } },
-      ])
-      .toArray();
-    const selectedRow = selectedCode ? await devices.findOne({ assetCode: selectedCode }) : null;
+          { $group: { _id: "$owner" } },
+          { $sort: { _id: 1 } },
+        ])
+        .toArray(),
+      selectedCode ? devices.findOne({ assetCode: selectedCode }) : Promise.resolve(null),
+      devices.aggregate([{ $group: { _id: "$status", count: { $sum: 1 } } }]).toArray(),
+    ]);
+    const statusCounts = buildStatusCountMap(statusRows);
+    const total = Object.values(statusCounts).reduce((sum, value) => sum + value, 0);
 
     return {
       rows: rows.map((row) => mapDeviceRow(row as Record<string, unknown>)),
       owners: ownerRows.map((row) => String(row._id ?? "")).filter(Boolean),
       selectedRow: selectedRow ? mapDeviceRow(selectedRow as Record<string, unknown>) : null,
       pagination,
+      statusCards: buildDeviceStatusCards({
+        total,
+        pending: statusCounts["待分配"] ?? 0,
+        assigned: statusCounts["已分配"] ?? 0,
+        repairing: statusCounts["修理中"] ?? 0,
+      }),
     };
   } catch {
     return {
@@ -72,6 +86,7 @@ async function getDevicePageData(filters: DeviceFilters, pageInput: number, sele
       owners: [] as string[],
       selectedRow: null,
       pagination: buildServerPagination(0, pageInput, 10),
+      statusCards: buildDeviceStatusCards({ total: 0, pending: 0, assigned: 0, repairing: 0 }),
     };
   }
 }
@@ -87,7 +102,7 @@ export default async function DevicesPage({ searchParams }: DevicesPageProps) {
   };
   const currentPage = normalizePageParam(String(params.page ?? ""));
   const selectedCode = String(params.selected ?? "");
-  const { rows, owners, selectedRow, pagination } = await getDevicePageData(
+  const { rows, owners, selectedRow, pagination, statusCards } = await getDevicePageData(
     { ...filters, brand: "" },
     currentPage,
     selectedCode,
@@ -107,6 +122,7 @@ export default async function DevicesPage({ searchParams }: DevicesPageProps) {
   return (
     <main className="page-shell">
       <DesktopShell activeHref="/devices" title="手机资产台账" subtitle="支持多条件筛选、批量操作、状态留痕与右侧详情联动">
+        <DeviceStatusCards items={statusCards} />
         <Panel className="filters-panel">
           <DevicesFilters
             initialSearch={filters.search}

@@ -53,6 +53,11 @@
 .stat-card { min-height: 136px; display: flex; flex-direction: column; gap: 18px; }
 .stat-card__value { font-family: var(--font-data); font-size: 32px; line-height: 34px; }
 .stat-card__line { width: 40px; height: 4px; border-radius: 999px; margin-top: auto; }
+.device-status-section { display: flex; flex-direction: column; gap: 14px; }
+.device-status-section__header { display: flex; align-items: end; justify-content: space-between; gap: 20px; }
+.device-status-section__eyebrow { display: inline-flex; align-items: center; gap: 10px; color: var(--text-primary); font-size: 15px; line-height: 24px; font-weight: 700; }
+.device-status-section__eyebrow::before { content: ""; width: 28px; height: 4px; border-radius: 999px; background: linear-gradient(90deg, var(--accent) 0%, rgba(42, 167, 161, 0.18) 100%); }
+.device-status-section__header p { margin: 0; max-width: 520px; color: var(--text-secondary); font-size: 13px; line-height: 20px; text-align: right; }
 .dashboard-grid, .approval-grid, .device-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(280px, 0.95fr); gap: 20px; }
 .device-grid { align-items: start; }
 .employee-layout { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(320px, 0.9fr); gap: 20px; }
@@ -273,6 +278,8 @@
   .dashboard-activity-list { grid-template-columns: 1fr; }
   .filters-form { grid-template-columns: 1fr; }
   .pagination-nav { flex-direction: column; align-items: flex-start; }
+  .device-status-section__header { flex-direction: column; align-items: flex-start; }
+  .device-status-section__header p { max-width: none; text-align: left; }
 }
 
 @media (max-width: 760px) {
