@@ -1,14 +1,14 @@
-import Image from "next/image";
 import Link from "next/link";
 import { AssetStatusPill } from "@/components/asset-status-pill";
 import { PaginationNav } from "@/components/pagination-nav";
+import { DevicePreviewPanel } from "@/components/device-preview-panel";
 import { DevicesFilters } from "@/components/devices-filters";
 import { DeviceEntryModal } from "@/components/device-entry-modal";
 import { DesktopShell } from "@/components/desktop-shell";
-import { Panel, PrimaryButton } from "@/components/ui";
+import { Panel } from "@/components/ui";
 import { getNextDeviceCode } from "@/lib/device-data";
 import { formatBeijingDateTime } from "@/lib/date-time";
-import { buildDeviceMongoQuery, inferBrand, type DeviceFilters, type DeviceListRow } from "@/lib/device-listing";
+import { buildDeviceMongoQuery, type DeviceFilters, type DeviceListRow } from "@/lib/device-listing";
 import { getDevicesCollection } from "@/lib/mongodb";
 import { buildServerPagination, normalizePageParam } from "@/lib/pagination";
 
@@ -144,37 +144,7 @@ export default async function DevicesPage({ searchParams }: DevicesPageProps) {
               }}
             />
           </Panel>
-          <Panel title="设备速览" subtitle="与表格联动显示当前选中设备" className="device-side-panel">
-            <div className="device-hero-box">
-              {selected?.photoDataUrl ? <Image src={selected.photoDataUrl} alt="设备图片" fill unoptimized className="device-hero-box__image" /> : null}
-            </div>
-            <div className="device-side-panel__info">
-              {selected ? (
-                <>
-                  <p>{selected.model.split("/")[0]?.trim() || selected.model}</p>
-                  <p>{selected.model.split("/")[1]?.trim() || selected.brand || inferBrand(selected.model)}</p>
-                  <p>手机编号：{selected.code}</p>
-                  <p>当前责任人：{selected.owner}</p>
-                  <div className="device-side-panel__status-row">
-                    <span>当前状态：</span>
-                    <AssetStatusPill status={selected.status} />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <p>当前暂无设备数据</p>
-                  <p>请先通过右上角“手机录入”按钮录入设备</p>
-                </>
-              )}
-            </div>
-            <div className="device-side-panel__actions">
-              {selected ? (
-                <PrimaryButton href={`/devices/${selected.code}`}>查看完整详情</PrimaryButton>
-              ) : (
-                <button className="button button--ghost" type="button" disabled>暂无详情</button>
-              )}
-            </div>
-          </Panel>
+          <DevicePreviewPanel selected={selected} />
         </section>
         {showModal ? <DeviceEntryModal nextDeviceCode={nextDeviceCode} warehousingDate={warehousingDate} /> : null}
       </DesktopShell>

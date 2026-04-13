@@ -30,6 +30,33 @@ test("手机资产台账页应支持通过查询参数联动列表和右侧详�
   await expect(page.getByRole("link", { name: "查看完整详情" })).toHaveAttribute("href", new RegExp(uniqueCode));
 });
 
+test("设备速览图片应支持点击放大查看", async ({ page }) => {
+  await loginAsAdmin(page);
+  await page.waitForURL(/\/dashboard$/, { timeout: 15000 });
+
+  await page.goto("/devices?modal=new");
+  const uniqueCode = await page.getByLabel("手机编号").inputValue();
+  await page.getByRole("textbox", { name: "品牌" }).fill("Apple");
+  await page.getByRole("textbox", { name: "型号" }).fill("iPhone Zoom");
+  await page.getByRole("textbox", { name: "存储容量" }).fill("256G");
+  await page.getByRole("textbox", { name: "序列号" }).fill(`SN-${Date.now()}`);
+  await page.getByLabel("上传手机图片").setInputFiles({
+    name: "phone.png",
+    mimeType: "image/png",
+    buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+cC1UAAAAASUVORK5CYII=", "base64"),
+  });
+  await page.getByRole("button", { name: "提交录入" }).click();
+  await page.waitForURL(/\/devices\?selected=sj-\d{2,}$/);
+
+  await page.goto(`/devices?search=${uniqueCode}&selected=${uniqueCode}`);
+
+  await page.getByRole("button", { name: "放大查看设备图片" }).click();
+  await expect(page.getByRole("dialog", { name: "设备图片预览" })).toBeVisible();
+  await expect(page.getByRole("img", { name: "设备图片大图预览" })).toBeVisible();
+  await page.getByRole("button", { name: "关闭设备图片预览" }).click();
+  await expect(page.getByRole("dialog", { name: "设备图片预览" })).toHaveCount(0);
+});
+
 test("手机资产页筛选区应自动应用搜索和筛选且不显示品牌筛选", async ({ page }) => {
   await loginAsAdmin(page);
   await page.waitForURL(/\/dashboard$/, { timeout: 15000 });
