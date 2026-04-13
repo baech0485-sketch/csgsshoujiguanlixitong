@@ -208,7 +208,8 @@
 .employee-card--interactive:hover { transform: translateY(-1px); border-color: rgba(42, 167, 161, 0.34); box-shadow: 0 14px 28px rgba(22, 50, 56, 0.08); background: linear-gradient(180deg, #fffdfc 0%, #fbf7f1 100%); }
 .employee-card__edit-trigger { position: absolute; inset: 0; z-index: 2; border: 0; border-radius: inherit; background: transparent; cursor: pointer; }
 .employee-card__edit-trigger:focus-visible { outline: 0; box-shadow: inset 0 0 0 2px rgba(42, 167, 161, 0.4); }
-.employee-card__edit-chip { position: absolute; right: 18px; top: 18px; z-index: 1; display: inline-flex; align-items: center; justify-content: center; padding: 4px 10px; border-radius: 999px; background: rgba(16, 60, 67, 0.08); color: var(--primary-surface); font-size: 11px; line-height: 16px; letter-spacing: 0.04em; }
+.employee-card__side { min-width: 94px; align-self: stretch; display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; gap: 14px; }
+.employee-card__edit-chip { display: inline-flex; align-items: center; justify-content: center; margin-top: auto; padding: 4px 10px; border-radius: 999px; background: rgba(16, 60, 67, 0.08); color: var(--primary-surface); font-size: 11px; line-height: 16px; letter-spacing: 0.04em; }
 .employee-card__avatar { width: 56px; height: 56px; display: grid; place-items: center; border-radius: 18px; background: linear-gradient(180deg, #184c53 0%, #103c43 100%); }
 .employee-card__body { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
 .employee-card__top { display: flex; align-items: start; justify-content: space-between; gap: 16px; }

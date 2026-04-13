@@ -108,23 +108,25 @@ export function EmployeesManager({
                     aria-label={`编辑员工 ${item.name}`}
                     onClick={() => setEditingEmployee(item)}
                   />
-                  <span className="employee-card__edit-chip">点击编辑</span>
-                <div className="employee-card__avatar"><EmployeeIcon color="var(--text-inverse)" /></div>
-                <div className="employee-card__body">
-                  <div className="employee-card__top">
-                    <div>
-                      <strong>{item.name}</strong>
-                      <p>{item.employeeCode} · {item.department}</p>
+                  <div className="employee-card__avatar"><EmployeeIcon color="var(--text-inverse)" /></div>
+                  <div className="employee-card__body">
+                    <div className="employee-card__top">
+                      <div>
+                        <strong>{item.name}</strong>
+                        <p>{item.employeeCode} · {item.department}</p>
+                      </div>
                     </div>
+                    <div className="employee-card__meta">
+                      <span>名下手机 {item.deviceCount + item.repairingCount} 台</span>
+                      <span>使用中 {item.deviceCount} 台</span>
+                      <span>维修中 {item.repairingCount} 台</span>
+                      <span>岗位 {item.title || "未填写"}</span>
+                    </div>
+                  </div>
+                  <div className="employee-card__side">
                     <StatusPill tone={item.status === "在职" ? "success" : "warning"}>{item.status}</StatusPill>
+                    <span className="employee-card__edit-chip">点击编辑</span>
                   </div>
-                  <div className="employee-card__meta">
-                    <span>名下手机 {item.deviceCount + item.repairingCount} 台</span>
-                    <span>使用中 {item.deviceCount} 台</span>
-                    <span>维修中 {item.repairingCount} 台</span>
-                    <span>岗位 {item.title || "未填写"}</span>
-                  </div>
-                </div>
                 </article>
               )) : <div className="device-empty">当前暂无员工数据，请先录入员工。</div>}
             </div>

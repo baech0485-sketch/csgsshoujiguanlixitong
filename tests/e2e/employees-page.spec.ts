@@ -1,5 +1,17 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator } from "@playwright/test";
 import { loginAsAdmin } from "./helpers";
+
+async function expectEditChipBelowStatus(employeeCard: Locator) {
+  const statusBadge = employeeCard.getByText("在职", { exact: true });
+  const editChip = employeeCard.getByText("点击编辑", { exact: true });
+  const statusBox = await statusBadge.boundingBox();
+  const editBox = await editChip.boundingBox();
+
+  expect(statusBox).not.toBeNull();
+  expect(editBox).not.toBeNull();
+  expect(editBox!.y).toBeGreaterThanOrEqual(statusBox!.y + statusBox!.height);
+  expect(Math.abs((statusBox!.x + statusBox!.width) - (editBox!.x + editBox!.width))).toBeLessThanOrEqual(4);
+}
 
 test("员工管理页应支持新增员工并展示员工台账", async ({ page }) => {
   await loginAsAdmin(page);
@@ -21,6 +33,7 @@ test("员工管理页应支持新增员工并展示员工台账", async ({ page 
   await expect(employeeCard.getByText(uniqueName, { exact: true })).toBeVisible();
   await expect(employeeCard.getByText("在职", { exact: true })).toBeVisible();
   await expect(employeeCard.getByRole("button", { name: `编辑员工 ${uniqueName}` })).toBeVisible();
+  await expectEditChipBelowStatus(employeeCard);
   await expect(page.getByLabel("部门筛选")).toBeVisible();
   await page.getByLabel("部门筛选").selectOption("宜昌销售部");
   await page.waitForURL(/department=%E5%AE%9C%E6%98%8C%E9%94%80%E5%94%AE%E9%83%A8/, { timeout: 15000 });
@@ -64,5 +77,6 @@ test("员工卡片应支持点击进入编辑并保存修改", async ({ page }) 
   const updatedCard = page.getByRole("article").filter({ hasText: updatedName });
   await expect(updatedCard).toBeVisible();
   await expect(updatedCard).toContainText("招商主管");
+  await expectEditChipBelowStatus(updatedCard);
   await expect(page.getByText(uniqueName, { exact: true })).toHaveCount(0);
 });
