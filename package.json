@@ -11,7 +11,7 @@
     "start": "next start",
     "lint": "eslint src tests next.config.ts playwright.config.ts vitest.config.ts eslint.config.mjs",
     "test": "vitest run",
-    "test:e2e": "npm run build && playwright test"
+    "test:e2e": "node scripts/run-e2e.mjs"
   },
   "keywords": [],
   "author": "",
@@ -35,6 +35,7 @@
     "eslint-config-next": "^16.2.2",
     "globals": "^17.4.0",
     "jsdom": "^29.0.1",
+    "mongodb-memory-server": "^11.0.1",
     "typescript": "^6.0.2",
     "typescript-eslint": "^8.58.0",
     "vitest": "^4.1.2"

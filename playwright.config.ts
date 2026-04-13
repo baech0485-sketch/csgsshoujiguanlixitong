@@ -1,5 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
 
+if (process.env.E2E_USE_MEMORY_MONGO !== "1") {
+  throw new Error("Playwright 已禁止直连默认数据库。请使用 `npm run test:e2e` 启动内存测试库。");
+}
+
 export default defineConfig({
   testDir: "./tests/e2e",
   timeout: 45_000,

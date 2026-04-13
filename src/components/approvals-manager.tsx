@@ -6,6 +6,7 @@ import { useEffect, useState, useTransition } from "react";
 import { CopyLinkButton } from "@/components/copy-link-button";
 import { StatusPill } from "@/components/ui";
 import type { ApprovalViewRow } from "@/lib/approvals-view";
+import { canDeleteAssignmentApproval } from "@/lib/approval-record-lock";
 
 export function ApprovalsManager({
   approvals,
@@ -48,6 +49,11 @@ export function ApprovalsManager({
       {message ? <p className="form-error">{message}</p> : null}
       {localApprovals.length ? localApprovals.map((item) => (
         <article key={item.id} className="approval-card approval-card--rich">
+          {(() => {
+            const deleteLocked = !canDeleteAssignmentApproval(item.status);
+
+            return (
+              <>
           <div className="employee-card__top">
             <div>
               <strong>{item.employeeName}</strong>
@@ -69,14 +75,17 @@ export function ApprovalsManager({
               type="button"
               className="button button--ghost"
               onClick={() => void deleteRecord(item.id)}
-              disabled={isPending}
+              disabled={isPending || deleteLocked}
             >
-              {isPending ? "删除中..." : "删除记录"}
+              {deleteLocked ? "已领取后锁定" : isPending ? "删除中..." : "删除记录"}
             </button>
           </div>
           {item.signatureImage ? (
             <Image className="approval-card__signature" src={item.signatureImage} alt={`${item.employeeName} 签字`} width={180} height={96} unoptimized />
           ) : null}
+              </>
+            );
+          })()}
         </article>
       )) : <div className="device-empty">当前还没有分配确认记录，请先到领用分配页面生成记录。</div>}
     </div>

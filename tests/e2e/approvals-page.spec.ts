@@ -124,6 +124,7 @@ test("领用分配工作台应在员工勾选确认后同步显示已领取结�
   await expect(approvalCard.getByText("已领取", { exact: true })).toBeVisible();
   await expect(approvalCard.getByText(/确认时间/)).toBeVisible();
   await expect(approvalCard.getByText("勾选确认")).toBeVisible();
+  await expect(approvalCard.getByRole("button", { name: "已领取后锁定" })).toBeDisabled();
 
   await page.getByLabel("领取状态筛选").selectOption("已领取");
   await expect(page).toHaveURL(/status=%E5%B7%B2%E9%A2%86%E5%8F%96/);

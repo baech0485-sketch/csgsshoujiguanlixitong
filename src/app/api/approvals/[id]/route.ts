@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 import { NextResponse } from "next/server";
 import { logDeviceEvent } from "@/lib/device-events";
+import { canDeleteAssignmentApproval } from "@/lib/approval-record-lock";
 import { getApprovalsCollection, getDevicesCollection } from "@/lib/mongodb";
 
 type RouteContext = {
@@ -42,13 +43,17 @@ export async function DELETE(_request: Request, context: RouteContext) {
     return NextResponse.json({ message: "领取确认记录不存在" }, { status: 404 });
   }
 
+  if (!canDeleteAssignmentApproval(String(approval.status ?? ""))) {
+    return NextResponse.json({ message: "员工已领取的记录已锁定，不允许删除" }, { status: 409 });
+  }
+
   const deviceCodes = Array.isArray(approval.deviceCodes)
     ? approval.deviceCodes.map(String).filter(Boolean)
     : [String(approval.deviceCode ?? "")].filter(Boolean);
 
   await approvals.deleteOne({ _id: new ObjectId(id) });
 
-  if (approval.status !== "已领取" && deviceCodes.length) {
+  if (deviceCodes.length) {
     const updatedAt = new Date();
     await devices.updateMany(
       { assetCode: { $in: deviceCodes } },
