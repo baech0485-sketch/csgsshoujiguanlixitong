@@ -17,6 +17,8 @@ type DeviceWorkspaceProps = {
   totalItems: number;
   totalPages: number;
   queryBase: string;
+  isLoading?: boolean;
+  emptyMessage?: string;
 };
 
 type DeviceRoutePayload = {
@@ -70,6 +72,8 @@ export function DeviceWorkspace({
   totalItems,
   totalPages,
   queryBase,
+  isLoading = false,
+  emptyMessage = "暂无匹配设备，请调整筛选条件或先录入手机资产。",
 }: DeviceWorkspaceProps) {
   const [selected, setSelected] = useState<DeviceListRow | null>(initialSelected);
   const [pendingCode, setPendingCode] = useState<string | null>(null);
@@ -164,7 +168,7 @@ export function DeviceWorkspace({
                 <span>{row.date}</span>
               </Link>
             );
-          }) : <div className="device-empty">暂无匹配设备，请调整筛选条件或先录入手机资产。</div>}
+          }) : <div className="device-empty">{emptyMessage}</div>}
         </div>
         <PaginationNav
           page={page}
@@ -174,7 +178,7 @@ export function DeviceWorkspace({
           hrefForPage={(nextPage) => buildPageHref(queryBase, nextPage)}
         />
       </Panel>
-      <DevicePreviewPanel selected={selected} isLoading={Boolean(pendingCode)} />
+      <DevicePreviewPanel selected={selected} isLoading={isLoading || Boolean(pendingCode)} />
     </section>
   );
 }

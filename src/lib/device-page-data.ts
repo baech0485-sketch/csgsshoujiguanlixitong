@@ -51,6 +51,14 @@ export const DEVICE_PAGE_INDEX_SPECS = [
   { key: { currentOwner: 1, updatedAt: -1 }, name: "currentOwner_updatedAt" },
 ] as const;
 
+export type DevicePageDataResult = {
+  rows: DeviceListRow[];
+  owners: string[];
+  selectedRow: DeviceListRow | null;
+  pagination: ReturnType<typeof buildServerPagination>;
+  statusCards: ReturnType<typeof buildDeviceStatusCards>;
+};
+
 let devicePageIndexesReady: Promise<unknown> | null = null;
 
 export function resetDevicePageIndexesForTests() {
@@ -109,7 +117,7 @@ export async function getDevicePageDataFromCollection(
   filters: DeviceFilters,
   pageInput: number,
   selectedCode: string,
-) {
+): Promise<DevicePageDataResult> {
   await ensureDevicePageIndexes(collection);
 
   const query = buildDeviceMongoQuery(filters);

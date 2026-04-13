@@ -1,6 +1,24 @@
 import { test, expect } from "@playwright/test";
 import { loginAsAdmin } from "./helpers";
 
+test("点击手机资产时应先进入页面并显示云数据库加载中提示", async ({ page }) => {
+  await page.route("**/api/devices/page-data**", async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    const response = await route.fetch();
+    await route.fulfill({ response });
+  });
+
+  await loginAsAdmin(page);
+  await page.waitForURL(/\/dashboard$/, { timeout: 15000 });
+
+  await page.getByRole("link", { name: "手机资产", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "手机资产台账", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "云数据库加载中", exact: true })).toBeVisible();
+  await page.waitForResponse((response) => response.url().includes("/api/devices/page-data") && response.ok());
+  await expect(page.getByText("云数据库数据加载中，请稍候。", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("暂无匹配设备，请调整筛选条件或先录入手机资产。", { exact: true }).or(page.locator(".device-row").first())).toBeVisible();
+});
+
 test("手机资产台账页应支持通过查询参数联动列表和右侧详情", async ({ page }) => {
   await loginAsAdmin(page);
   await page.waitForURL(/\/dashboard$/, { timeout: 15000 });
