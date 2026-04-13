@@ -49,6 +49,7 @@ export function DeviceEntryModal({ nextDeviceCode, warehousingDate }: { nextDevi
   const [form, setForm] = useState(() => buildInitialState(nextDeviceCode, warehousingDate));
   const [message, setMessage] = useState("");
   const [isPending, startTransition] = useTransition();
+  const isCodeReady = Boolean(nextDeviceCode);
 
   function closeModal() {
     startTransition(() => {
@@ -128,7 +129,11 @@ export function DeviceEntryModal({ nextDeviceCode, warehousingDate }: { nextDevi
           ))}
         </div>
         <DevicePhotoUpload value={form.photoDataUrl} onChange={(value) => setForm((current) => ({ ...current, photoDataUrl: value }))} />
-        <div className="modal-note">提交后系统会自动写入手机编号、入库日期和待分配状态。若需要立即分配给销售，可在台账中继续发起领用分配。</div>
+        <div className="modal-note">
+          {isCodeReady
+            ? "提交后系统会自动写入手机编号、入库日期和待分配状态。若需要立即分配给销售，可在台账中继续发起领用分配。"
+            : "当前未能提前取到手机编号，但提交时服务端仍会自动生成正式编号，不会影响录入。"}
+        </div>
         {message ? <p className="form-error">{message}</p> : null}
         <div className="modal-actions">
           <button className="button button--ghost" type="button" onClick={closeModal}>

@@ -192,3 +192,39 @@ test("手机资产列表点击设备后不应闪出登录状态验证遮罩", as
   await expect(page.getByText("正在验证登录状态")).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "设备详情与编辑", exact: true })).toBeVisible();
 });
+
+test("手机资产列表点击设备切换速览时不应触发同页重新加载请求", async ({ page }) => {
+  await loginAsAdmin(page);
+  await page.waitForURL(/\/dashboard$/, { timeout: 15000 });
+
+  await page.goto("/devices?modal=new");
+  const uniqueCode = await page.getByLabel("手机编号").inputValue();
+  await page.getByRole("textbox", { name: "品牌" }).fill("Apple");
+  await page.getByRole("textbox", { name: "型号" }).fill("iPhone Preview Switch");
+  await page.getByRole("textbox", { name: "存储容量" }).fill("256G");
+  await page.getByRole("textbox", { name: "序列号" }).fill(`SN-${Date.now()}`);
+  await page.getByLabel("上传手机图片").setInputFiles({
+    name: "phone.png",
+    mimeType: "image/png",
+    buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+cC1UAAAAASUVORK5CYII=", "base64"),
+  });
+  await page.getByRole("button", { name: "提交录入" }).click();
+  await page.waitForURL(/\/devices\?selected=sj-\d{2,}$/);
+
+  await page.goto(`/devices?search=${uniqueCode}`);
+  const rscRequests: string[] = [];
+  let captureRequests = false;
+  page.on("request", (request) => {
+    const url = request.url();
+    if (captureRequests && url.includes("/devices") && url.includes("_rsc=")) {
+      rscRequests.push(url);
+    }
+  });
+
+  await page.waitForLoadState("networkidle");
+  captureRequests = true;
+  await page.getByRole("link", { name: new RegExp(uniqueCode, "i") }).first().click();
+  await page.waitForURL(new RegExp(`selected=${encodeURIComponent(uniqueCode)}`));
+  await expect(page.getByText(`手机编号：${uniqueCode}`)).toBeVisible();
+  expect(rscRequests).toHaveLength(0);
+});

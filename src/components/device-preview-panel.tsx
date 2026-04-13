@@ -8,9 +8,10 @@ import { inferBrand, type DeviceListRow } from "@/lib/device-listing";
 
 type DevicePreviewPanelProps = {
   selected: DeviceListRow | null;
+  isLoading?: boolean;
 };
 
-export function DevicePreviewPanel({ selected }: DevicePreviewPanelProps) {
+export function DevicePreviewPanel({ selected, isLoading = false }: DevicePreviewPanelProps) {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   useEffect(() => {
@@ -47,7 +48,7 @@ export function DevicePreviewPanel({ selected }: DevicePreviewPanelProps) {
               <Image src={photoDataUrl} alt="设备图片" fill unoptimized className="device-hero-box__image" />
               <span className="device-hero-box__hint">点击放大查看</span>
             </button>
-          ) : null}
+          ) : isLoading ? <span className="device-hero-box__hint">正在切换设备速览</span> : null}
         </div>
         <div className="device-side-panel__info">
           {selected ? (
