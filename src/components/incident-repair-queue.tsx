@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { IncidentIcon, SearchIcon } from "@/components/icons";
+import { IncidentRepairDeviceEditModal } from "@/components/incident-repair-device-edit-modal";
 import { PrimaryButton, StatusPill } from "@/components/ui";
 import type { RepairQueueRow } from "@/lib/incident-management";
 
@@ -10,6 +11,7 @@ export function IncidentRepairQueue({ items }: { items: RepairQueueRow[] }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [message, setMessage] = useState("");
+  const [editingCode, setEditingCode] = useState("");
   const [pendingCode, setPendingCode] = useState("");
   const [isPending, startTransition] = useTransition();
   const filteredItems = useMemo(() => {
@@ -76,13 +78,27 @@ export function IncidentRepairQueue({ items }: { items: RepairQueueRow[] }) {
                 {item.confirmedAt ? <span>确认时间 {item.confirmedAt}</span> : null}
               </div>
             </div>
-            <PrimaryButton onClick={() => completeRepair(item.deviceCode)} disabled={isPending && pendingCode === item.deviceCode}>
-              {isPending && pendingCode === item.deviceCode ? "处理中..." : "维修完成"}
-            </PrimaryButton>
+            <div className="incident-repair-queue__actions">
+              <button className="button button--ghost" type="button" onClick={() => setEditingCode(item.deviceCode)}>
+                编辑手机
+              </button>
+              <PrimaryButton onClick={() => completeRepair(item.deviceCode)} disabled={isPending && pendingCode === item.deviceCode}>
+                {isPending && pendingCode === item.deviceCode ? "处理中..." : "维修完成"}
+              </PrimaryButton>
+            </div>
           </article>
         )) : <div className="device-empty">{items.length ? "当前搜索条件下没有匹配的维修手机。" : "当前没有处于维修中的手机。"}</div>}
       </div>
       {message ? <p className="form-error">{message}</p> : null}
+      <IncidentRepairDeviceEditModal
+        deviceCode={editingCode}
+        open={Boolean(editingCode)}
+        onClose={() => setEditingCode("")}
+        onSaved={() => {
+          setEditingCode("");
+          startTransition(() => router.refresh());
+        }}
+      />
     </>
   );
 }
