@@ -23,6 +23,47 @@
   line-height: 22px;
 }
 
+.modeGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.modeCard {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.78);
+  cursor: pointer;
+}
+
+.modeCardSelected {
+  border-color: rgba(42, 167, 161, 0.55);
+  background: rgba(223, 244, 240, 0.95);
+}
+
+.modeCard input {
+  margin: 3px 0 0;
+}
+
+.modeCard strong {
+  display: block;
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.modeCard p {
+  margin: 4px 0 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 20px;
+}
+
 .ruleList {
   display: grid;
   gap: 10px;
@@ -126,10 +167,25 @@
   background: rgba(223, 244, 240, 0.95);
 }
 
+.deviceOptionPassive {
+  cursor: default;
+}
+
 .deviceOption input {
   margin: 0;
   width: 18px;
   height: 18px;
+}
+
+.deviceOptionMarker {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  font-size: 16px;
+  line-height: 18px;
 }
 
 .deviceInfo {
@@ -164,9 +220,17 @@
   line-height: 20px;
 }
 
+.passiveHint {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 20px;
+}
+
 @media (max-width: 1180px) {
   .hero,
-  .columns {
+  .columns,
+  .modeGrid {
     grid-template-columns: 1fr;
   }
 }

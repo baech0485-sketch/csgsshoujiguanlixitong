@@ -105,3 +105,41 @@ test("相互交换页应支持在两名员工之间交换已领取手机", async
   await expect(page.getByRole("article").filter({ hasText: sourceName }).getByText(targetDeviceCode, { exact: true })).toBeVisible();
   await expect(page.getByRole("article").filter({ hasText: targetName }).getByText(sourceDeviceCode, { exact: true })).toBeVisible();
 });
+
+test("相互交换页应支持切换到单向交换并仅转移员工甲的手机", async ({ page }) => {
+  await loginAsAdmin(page);
+  await page.waitForURL(/\/dashboard$/, { timeout: 15000 });
+
+  const suffix = String(Date.now()).slice(-6);
+  const sourceName = `单向员工甲${suffix}`;
+  const targetName = `单向员工乙${suffix}`;
+  const sourceEmployeeCode = await createEmployee(page, sourceName, "武汉销售部");
+  const targetEmployeeCode = await createEmployee(page, targetName, "宜昌销售部");
+  const sourceDeviceCode = await createDevice(page, "iPhone One Way A");
+
+  await assignAndConfirm(page, sourceEmployeeCode, sourceDeviceCode);
+
+  await page.goto("/exchange");
+  await expect(page.getByRole("heading", { name: "相互交换", exact: true })).toBeVisible();
+  await page.getByLabel("交换模式").selectOption("unidirectional");
+  await page.getByLabel("选择员工甲").selectOption(sourceEmployeeCode);
+  await page.getByLabel("选择员工乙").selectOption(targetEmployeeCode);
+  await expect(page.getByText("单向交换时，员工乙无需勾选自己的手机。", { exact: true })).toBeVisible();
+  await page.getByLabel(`勾选员工甲设备 ${sourceDeviceCode}`).check();
+
+  await Promise.all([
+    page.waitForResponse((response) =>
+      response.url().includes("/api/exchanges")
+      && response.request().method() === "POST"
+      && response.ok(),
+    ),
+    page.getByRole("button", { name: "执行单向交换" }).click(),
+  ]);
+
+  await expect(page.getByText("手机交换已完成", { exact: true })).toBeVisible();
+  const sourcePanel = page.getByRole("article").filter({ has: page.getByLabel("选择员工甲") }).first();
+  const targetPanel = page.getByRole("article").filter({ has: page.getByLabel("选择员工乙") }).first();
+  await expect(sourcePanel).toContainText("已分配 0 台");
+  await expect(targetPanel).toContainText("已分配 1 台");
+  await expect(targetPanel.getByText(sourceDeviceCode, { exact: true })).toBeVisible();
+});

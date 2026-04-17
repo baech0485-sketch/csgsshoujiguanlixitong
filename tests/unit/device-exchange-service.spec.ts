@@ -97,6 +97,7 @@ describe("executeDeviceExchange", () => {
     await expect(() =>
       executeDeviceExchange(
         {
+          mode: "bidirectional",
           sourceEmployeeCode: "cs-01",
           targetEmployeeCode: "cs-02",
           sourceDeviceCodes: ["sj-01"],
@@ -135,5 +136,51 @@ describe("executeDeviceExchange", () => {
         },
       ),
     ).rejects.toThrow("仅支持交换当前员工名下的已分配手机");
+  });
+
+  it("应支持单向交换，只把员工甲选中的手机转给员工乙", async () => {
+    const updateDeviceOwner = vi.fn(async () => ({ ok: true }));
+    const logEvent = vi.fn(async () => undefined);
+    const syncOpenWorkflows = vi.fn(async () => undefined);
+
+    const result = await executeDeviceExchange(
+      {
+        mode: "unidirectional",
+        sourceEmployeeCode: "cs-01",
+        targetEmployeeCode: "cs-02",
+        sourceDeviceCodes: ["sj-01", "sj-02"],
+        targetDeviceCodes: [],
+      },
+      {
+        findEmployeeByCode: async (employeeCode) => ({
+          employeeCode,
+          name: employeeCode === "cs-01" ? "张晓雯" : "李静",
+          department: employeeCode === "cs-01" ? "武汉销售部" : "宜昌销售部",
+          status: "在职",
+        }),
+        findDevicesByCodes: async (deviceCodes) => deviceCodes.map((deviceCode) => ({
+          assetCode: deviceCode,
+          brand: "Apple",
+          model: "iPhone 15",
+          storage: "256G",
+          status: "已分配",
+          currentOwnerCode: "cs-01",
+        })),
+        hasPendingReceipt: async () => false,
+        updateDeviceOwner,
+        syncOpenWorkflows,
+        logEvent,
+      },
+    );
+
+    expect(result.mode).toBe("unidirectional");
+    expect(result.totalDevices).toBe(2);
+    expect(result.targetDeviceCodes).toEqual([]);
+    expect(updateDeviceOwner).toHaveBeenCalledTimes(2);
+    expect(syncOpenWorkflows).toHaveBeenCalledWith(expect.objectContaining({
+      sourceDeviceCodes: ["sj-01", "sj-02"],
+      targetDeviceCodes: [],
+    }));
+    expect(logEvent).toHaveBeenCalledTimes(2);
   });
 });

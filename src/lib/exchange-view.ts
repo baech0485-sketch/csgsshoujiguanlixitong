@@ -59,8 +59,7 @@ export async function getExchangeWorkspaceView() {
         deviceCount: ownerMetrics?.assignedCount ?? 0,
         devices: ownerMetrics?.devices.filter((device) => device.status === "已分配") ?? [],
       };
-    })
-    .filter((item) => item.deviceCount > 0);
+    });
 
   return {
     employees: items,

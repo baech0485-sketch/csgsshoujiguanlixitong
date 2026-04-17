@@ -6,6 +6,7 @@ import { getApprovalsCollection, getDevicesCollection, getEmployeesCollection } 
 
 export async function POST(request: Request) {
   const payload = (await request.json()) as {
+    mode?: string;
     sourceEmployeeCode?: string;
     targetEmployeeCode?: string;
     sourceDeviceCodes?: string[];
@@ -19,6 +20,7 @@ export async function POST(request: Request) {
   try {
     const result = await executeDeviceExchange(
       {
+        mode: payload.mode === "unidirectional" ? "unidirectional" : "bidirectional",
         sourceEmployeeCode: payload.sourceEmployeeCode || "",
         targetEmployeeCode: payload.targetEmployeeCode || "",
         sourceDeviceCodes: Array.isArray(payload.sourceDeviceCodes) ? payload.sourceDeviceCodes : [],

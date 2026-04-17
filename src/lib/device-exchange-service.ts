@@ -1,4 +1,7 @@
+export type ExchangeMode = "bidirectional" | "unidirectional";
+
 type ExchangeCommand = {
+  mode?: ExchangeMode;
   sourceEmployeeCode: string;
   targetEmployeeCode: string;
   sourceDeviceCodes: string[];
@@ -67,10 +70,14 @@ async function resolveOwnedDevices(
   ownerCode: string,
   deviceCodes: string[],
   deps: ExchangeDeps,
+  { required }: { required: boolean },
 ) {
   const normalizedCodes = normalizeCodes(deviceCodes);
   if (!normalizedCodes.length) {
-    throw new Error("双方都至少需要选择一台手机");
+    if (required) {
+      throw new Error("员工甲至少需要选择一台手机");
+    }
+    return [];
   }
 
   const devices = await deps.findDevicesByCodes(normalizedCodes);
@@ -125,6 +132,7 @@ async function logExchangeEvents(
 }
 
 export async function executeDeviceExchange(command: ExchangeCommand, deps: ExchangeDeps) {
+  const mode: ExchangeMode = command.mode === "unidirectional" ? "unidirectional" : "bidirectional";
   const sourceEmployeeCode = command.sourceEmployeeCode.trim();
   const targetEmployeeCode = command.targetEmployeeCode.trim();
 
@@ -140,13 +148,15 @@ export async function executeDeviceExchange(command: ExchangeCommand, deps: Exch
     resolveEmployee(targetEmployeeCode, deps),
   ]);
   const [sourceDevices, targetDevices] = await Promise.all([
-    resolveOwnedDevices(sourceEmployeeCode, command.sourceDeviceCodes, deps),
-    resolveOwnedDevices(targetEmployeeCode, command.targetDeviceCodes, deps),
+    resolveOwnedDevices(sourceEmployeeCode, command.sourceDeviceCodes, deps, { required: true }),
+    resolveOwnedDevices(targetEmployeeCode, command.targetDeviceCodes, deps, { required: mode === "bidirectional" }),
   ]);
   const updatedAt = new Date();
 
   await applyOwnerPatch(sourceDevices, targetEmployee, updatedAt, deps);
-  await applyOwnerPatch(targetDevices, sourceEmployee, updatedAt, deps);
+  if (targetDevices.length) {
+    await applyOwnerPatch(targetDevices, sourceEmployee, updatedAt, deps);
+  }
   await deps.syncOpenWorkflows({
     sourceEmployeeCode,
     targetEmployeeCode,
@@ -158,10 +168,11 @@ export async function executeDeviceExchange(command: ExchangeCommand, deps: Exch
   });
   await Promise.all([
     logExchangeEvents(sourceDevices, sourceEmployee, targetEmployee, deps),
-    logExchangeEvents(targetDevices, targetEmployee, sourceEmployee, deps),
+    targetDevices.length ? logExchangeEvents(targetDevices, targetEmployee, sourceEmployee, deps) : Promise.resolve(),
   ]);
 
   return {
+    mode,
     sourceEmployeeCode,
     targetEmployeeCode,
     sourceDeviceCodes: sourceDevices.map((device) => device.assetCode),
