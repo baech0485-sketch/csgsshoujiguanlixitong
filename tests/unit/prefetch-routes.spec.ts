@@ -7,6 +7,7 @@ describe("prefetch-routes", () => {
       "/devices",
       "/employees",
       "/assignments",
+      "/exchange",
       "/offboarding",
       "/incidents",
     ]);

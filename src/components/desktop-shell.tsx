@@ -6,6 +6,7 @@ import {
   DashboardIcon,
   DeviceIcon,
   EmployeeIcon,
+  ExchangeIcon,
   IncidentIcon,
   RecoveryIcon,
 } from "@/components/icons";
@@ -20,6 +21,7 @@ const iconMap = {
   employee: EmployeeIcon,
   approval: ApprovalIcon,
   assignment: AssignmentIcon,
+  exchange: ExchangeIcon,
   recovery: RecoveryIcon,
   incident: IncidentIcon,
 } as const;

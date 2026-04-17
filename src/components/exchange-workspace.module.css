@@ -1,0 +1,172 @@
+.layout {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);
+  gap: 20px;
+}
+
+.heroNote {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.heroNote p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.ruleList {
+  display: grid;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.ruleItem {
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.selectionSummary {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+.summaryCard {
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(16, 60, 67, 0.06), rgba(42, 167, 161, 0.08));
+  border: 1px solid rgba(22, 50, 56, 0.1);
+}
+
+.summaryCard strong {
+  display: block;
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.summaryCard p {
+  margin: 6px 0 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.employeePanel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.employeeHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.employeeMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.employeeMeta strong {
+  color: var(--text-primary);
+  font-size: 18px;
+  line-height: 28px;
+}
+
+.employeeMeta p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.deviceList {
+  display: grid;
+  gap: 12px;
+}
+
+.deviceOption {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.78);
+  cursor: pointer;
+}
+
+.deviceOptionSelected {
+  border-color: rgba(42, 167, 161, 0.5);
+  background: rgba(223, 244, 240, 0.95);
+}
+
+.deviceOption input {
+  margin: 0;
+  width: 18px;
+  height: 18px;
+}
+
+.deviceInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.deviceInfo strong {
+  color: var(--text-primary);
+  font-size: 15px;
+  line-height: 22px;
+}
+
+.deviceInfo p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.actionPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.actionPanel p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+@media (max-width: 1180px) {
+  .hero,
+  .columns {
+    grid-template-columns: 1fr;
+  }
+}

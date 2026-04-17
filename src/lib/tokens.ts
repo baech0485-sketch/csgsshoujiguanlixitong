@@ -27,6 +27,7 @@ export const desktopSidebarItems = [
   { href: "/devices", label: "手机资产", icon: "device" },
   { href: "/employees", label: "员工管理", icon: "employee" },
   { href: "/assignments", label: "领用分配", icon: "assignment" },
+  { href: "/exchange", label: "相互交换", icon: "exchange" },
   { href: "/offboarding", label: "离职回收", icon: "recovery" },
   { href: "/incidents", label: "异常管理", icon: "incident" },
 ] as const;
