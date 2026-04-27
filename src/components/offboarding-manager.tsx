@@ -2,7 +2,7 @@
 
 import { CopyLinkButton } from "@/components/copy-link-button";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { PrimaryButton, StatusPill } from "@/components/ui";
 import { getRecoveryModeMeta, type RecoveryMode } from "@/lib/recovery-mode";
 import type { OffboardingCaseRow, OffboardingEmployeeOption } from "@/lib/offboarding-view";
@@ -22,10 +22,28 @@ export function OffboardingManager({
   const [selectedEmployeeCode, setSelectedEmployeeCode] = useState(employees[0]?.employeeCode || "");
   const [mode, setMode] = useState<RecoveryMode>("offboarding");
   const [recordDate] = useState(new Date().toISOString().slice(0, 10));
+  const [selectedDeviceCodes, setSelectedDeviceCodes] = useState<string[]>([]);
   const [message, setMessage] = useState("");
   const [isPending, startTransition] = useTransition();
   const selectedEmployee = employees.find((item) => item.employeeCode === selectedEmployeeCode);
   const modeMeta = getRecoveryModeMeta(mode);
+  const isActiveRecovery = mode === "active";
+  const canSubmit = isActiveRecovery
+    ? Boolean(selectedEmployeeCode) && selectedDeviceCodes.length > 0
+    : Boolean(selectedEmployeeCode) && Boolean(selectedEmployee?.devices.length);
+
+  useEffect(() => {
+    setSelectedDeviceCodes([]);
+  }, [mode, selectedEmployeeCode]);
+
+  function toggleSelectedDevice(deviceCode: string, checked: boolean) {
+    setSelectedDeviceCodes((current) => {
+      if (checked) {
+        return current.includes(deviceCode) ? current : [...current, deviceCode];
+      }
+      return current.filter((item) => item !== deviceCode);
+    });
+  }
 
   async function handleCreate(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -33,7 +51,12 @@ export function OffboardingManager({
     const response = await fetch("/api/offboarding", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ employeeCode: selectedEmployeeCode, leavingDate: recordDate, mode }),
+      body: JSON.stringify({
+        employeeCode: selectedEmployeeCode,
+        leavingDate: recordDate,
+        mode,
+        selectedDeviceCodes,
+      }),
     });
     const payload = (await response.json()) as { message?: string };
     if (!response.ok) {
@@ -78,26 +101,52 @@ export function OffboardingManager({
         <div className="risk-card">
           <h3>待回收手机预览</h3>
           <p>{selectedEmployee ? `当前已选择 ${selectedEmployee.label}，以下手机会进入本次${modeMeta.label}清单。` : "请选择在职员工后查看其名下手机。"}</p>
-          <div className="employee-list">
-            {selectedEmployee?.devices.length ? selectedEmployee.devices.map((item) => (
-              <article key={item.deviceCode} className="employee-card">
-                <div className="employee-card__avatar" />
-                <div className="employee-card__body">
-                  <div className="employee-card__top">
-                    <div>
-                      <strong>{item.deviceCode}</strong>
-                      <p>{item.deviceTitle}</p>
+          {selectedEmployee?.devices.length ? (
+            isActiveRecovery ? (
+              <div className="assignment-device-list">
+                {selectedEmployee.devices.map((item) => {
+                  const checked = selectedDeviceCodes.includes(item.deviceCode);
+                  return (
+                    <label key={item.deviceCode} className={`assignment-device-option${checked ? " is-selected" : ""}`}>
+                      <input
+                        aria-label={`选择回收设备 ${item.deviceCode}`}
+                        type="checkbox"
+                        checked={checked}
+                        onChange={(event) => toggleSelectedDevice(item.deviceCode, event.target.checked)}
+                      />
+                      <div className="assignment-device-option__body">
+                        <strong>{item.deviceCode}</strong>
+                        <p>{item.deviceTitle}</p>
+                      </div>
+                      <StatusPill tone={checked ? "selected" : "warning"}>{checked ? "已选择" : "待选择"}</StatusPill>
+                    </label>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="employee-list">
+                {selectedEmployee.devices.map((item) => (
+                  <article key={item.deviceCode} className="employee-card">
+                    <div className="employee-card__avatar" />
+                    <div className="employee-card__body">
+                      <div className="employee-card__top">
+                        <div>
+                          <strong>{item.deviceCode}</strong>
+                          <p>{item.deviceTitle}</p>
+                        </div>
+                        <StatusPill tone="warning">待回收</StatusPill>
+                      </div>
                     </div>
-                    <StatusPill tone="warning">待回收</StatusPill>
-                  </div>
-                </div>
-              </article>
-            )) : <div className="device-empty">当前选中员工名下暂无可回收手机。</div>}
-          </div>
+                  </article>
+                ))}
+              </div>
+            )
+          ) : <div className="device-empty">当前选中员工名下暂无可回收手机。</div>}
         </div>
         <div className="approval-create-panel__actions">
           {message ? <p className="form-error">{message}</p> : null}
-          <PrimaryButton type="submit" disabled={isPending || !selectedEmployeeCode || !selectedEmployee?.devices.length}>{modeMeta.createButtonLabel}</PrimaryButton>
+          {!canSubmit && isActiveRecovery && selectedEmployee?.devices.length ? <p className="panel__subtitle">请先勾选至少一台要回收的手机。</p> : null}
+          <PrimaryButton type="submit" disabled={isPending || !canSubmit}>{modeMeta.createButtonLabel}</PrimaryButton>
           {isPending ? <p className="panel__subtitle">提交中...</p> : null}
         </div>
       </form>

@@ -33,7 +33,7 @@ const recoveryModeMetaMap: Record<RecoveryMode, RecoveryModeMeta> = {
   active: {
     label: "在职回收",
     formTitle: "发起在职回收",
-    formSubtitle: "适用于员工仍在职但需要先归还手机的场景，系统会生成员工可打开的归还确认链接。",
+    formSubtitle: "适用于员工仍在职但需要先归还手机的场景，请手动勾选本次要回收的手机后再生成确认链接。",
     dateLabel: "回收日期",
     createButtonLabel: "生成在职回收链接",
     createErrorMessage: "发起在职回收失败",

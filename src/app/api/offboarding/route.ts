@@ -11,7 +11,12 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const payload = (await request.json()) as { employeeCode?: string; leavingDate?: string; mode?: string };
+    const payload = (await request.json()) as {
+      employeeCode?: string;
+      leavingDate?: string;
+      mode?: string;
+      selectedDeviceCodes?: string[];
+    };
     const employeeCode = payload.employeeCode?.trim();
     const mode = normalizeRecoveryMode(payload.mode);
     if (!employeeCode) {
@@ -50,6 +55,26 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "该员工已存在待回收链接，请直接使用当前链接" }, { status: 409 });
     }
 
+    const linkedDeviceMap = new Map(linkedDevices.map((item) => [String(item.assetCode ?? ""), item]));
+    const selectedDeviceCodes = Array.isArray(payload.selectedDeviceCodes)
+      ? [...new Set(payload.selectedDeviceCodes.map((item) => item.trim()).filter(Boolean))]
+      : [];
+    const selectedDevices = mode === "active"
+      ? selectedDeviceCodes
+          .map((deviceCode) => linkedDeviceMap.get(deviceCode))
+          .filter((item): item is (typeof linkedDevices)[number] => Boolean(item))
+      : linkedDevices;
+
+    if (mode === "active") {
+      if (!selectedDeviceCodes.length) {
+        return NextResponse.json({ message: "请至少勾选一台要回收的手机" }, { status: 400 });
+      }
+
+      if (selectedDevices.length !== selectedDeviceCodes.length) {
+        return NextResponse.json({ message: "存在不可回收的手机，请重新勾选" }, { status: 400 });
+      }
+    }
+
     const confirmToken = createWorkflowToken();
     const confirmUrl = buildWorkflowUrl(new URL(request.url).origin, "/m/return-confirm", confirmToken);
     const result = await offboarding.insertOne({
@@ -59,8 +84,8 @@ export async function POST(request: Request) {
       department: String(employee.department ?? ""),
       leavingDate: payload.leavingDate?.trim() || now.toISOString().slice(0, 10),
       status: "待回收",
-      deviceCodes: linkedDevices.map((item) => String(item.assetCode ?? "")),
-      devices: linkedDevices.map((item) => ({
+      deviceCodes: selectedDevices.map((item) => String(item?.assetCode ?? "")),
+      devices: selectedDevices.map((item) => ({
         deviceCode: String(item.assetCode ?? ""),
         deviceTitle: `${String(item.brand ?? "")} ${String(item.model ?? "")} · ${String(item.storage ?? "")}`.trim(),
       })),

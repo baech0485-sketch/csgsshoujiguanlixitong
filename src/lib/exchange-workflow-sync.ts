@@ -1,4 +1,5 @@
 import { getDevicesCollection, getIncidentsCollection, getOffboardingCollection } from "@/lib/mongodb";
+import { normalizeRecoveryMode } from "@/lib/recovery-mode";
 
 type SyncEmployee = {
   employeeCode: string;
@@ -74,13 +75,21 @@ async function syncPendingOffboardingCase(employeeCode: string, updatedAt: Date)
     .find({ currentOwnerCode: employeeCode, status: "已分配" })
     .project({ assetCode: 1, brand: 1, model: 1, storage: 1 })
     .toArray();
+  const mode = normalizeRecoveryMode(String(pendingCase.mode ?? ""));
+  const deviceRows = mode === "active"
+    ? linkedDevices.filter((item) => {
+        const assetCode = String(item.assetCode ?? "");
+        const selectedCodes = Array.isArray(pendingCase.deviceCodes) ? pendingCase.deviceCodes.map(String) : [];
+        return selectedCodes.includes(assetCode);
+      })
+    : linkedDevices;
 
   await offboarding.updateOne(
     { _id: pendingCase._id },
     {
       $set: {
-        deviceCodes: linkedDevices.map((item) => String(item.assetCode ?? "")),
-        devices: buildOffboardingDevices(linkedDevices),
+        deviceCodes: deviceRows.map((item) => String(item.assetCode ?? "")),
+        devices: buildOffboardingDevices(deviceRows),
         updatedAt,
       },
     },
