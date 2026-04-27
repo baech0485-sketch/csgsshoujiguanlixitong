@@ -1,6 +1,7 @@
 import { buildOwnerDeviceMetrics } from "@/lib/device-ownership";
 import { getDevicesCollection, getEmployeesCollection, getOffboardingCollection } from "@/lib/mongodb";
 import { buildServerPagination } from "@/lib/pagination";
+import { type RecoveryMode, normalizeRecoveryMode } from "@/lib/recovery-mode";
 
 export type OffboardingEmployeeOption = {
   employeeCode: string;
@@ -12,6 +13,7 @@ export type OffboardingEmployeeOption = {
 };
 
 export type OffboardingCaseRow = {
+  mode: RecoveryMode;
   employeeCode: string;
   employeeName: string;
   department: string;
@@ -95,6 +97,7 @@ export async function getOffboardingPageView(pageInput = 1, pageSize = 10) {
     cases: {
       ...pagination,
       items: caseRows.map((row) => ({
+        mode: normalizeRecoveryMode(String(row.mode ?? "")),
         employeeCode: String(row.employeeCode ?? ""),
         employeeName: String(row.employeeName ?? ""),
         department: String(row.department ?? ""),

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { buildWorkflowUrl, createWorkflowToken } from "@/lib/workflow-links";
 import { getDevicesCollection, getEmployeesCollection, getOffboardingCollection } from "@/lib/mongodb";
+import { normalizeRecoveryMode } from "@/lib/recovery-mode";
 
 export async function GET() {
   const offboarding = await getOffboardingCollection();
@@ -10,8 +11,9 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const payload = (await request.json()) as { employeeCode?: string; leavingDate?: string };
+    const payload = (await request.json()) as { employeeCode?: string; leavingDate?: string; mode?: string };
     const employeeCode = payload.employeeCode?.trim();
+    const mode = normalizeRecoveryMode(payload.mode);
     if (!employeeCode) {
       return NextResponse.json({ message: "请选择在职员工" }, { status: 400 });
     }
@@ -51,6 +53,7 @@ export async function POST(request: Request) {
     const confirmToken = createWorkflowToken();
     const confirmUrl = buildWorkflowUrl(new URL(request.url).origin, "/m/return-confirm", confirmToken);
     const result = await offboarding.insertOne({
+      mode,
       employeeCode,
       employeeName: String(employee.name ?? ""),
       department: String(employee.department ?? ""),

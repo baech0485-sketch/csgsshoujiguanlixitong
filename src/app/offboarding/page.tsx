@@ -16,7 +16,7 @@ export default async function OffboardingPage({ searchParams }: OffboardingPageP
 
   return (
     <main className="page-shell">
-      <DesktopShell activeHref="/offboarding" title="离职回收" subtitle="选择在职员工后自动查看名下手机，生成归还确认链接，员工确认后会自动回收入库并同步离职状态">
+      <DesktopShell activeHref="/offboarding" title="资产回收" subtitle="支持在职回收与离职回收，两种模式都会回收入库；离职回收会额外同步员工状态">
         <OffboardingManager employees={employees} cases={cases.items} totalCases={cases.totalItems} />
         <PaginationNav
           page={cases.page}

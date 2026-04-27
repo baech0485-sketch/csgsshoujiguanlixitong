@@ -4,7 +4,10 @@ import { CopyLinkButton } from "@/components/copy-link-button";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { PrimaryButton, StatusPill } from "@/components/ui";
+import { getRecoveryModeMeta, type RecoveryMode } from "@/lib/recovery-mode";
 import type { OffboardingCaseRow, OffboardingEmployeeOption } from "@/lib/offboarding-view";
+
+const recoveryModes: RecoveryMode[] = ["offboarding", "active"];
 
 export function OffboardingManager({
   employees,
@@ -17,10 +20,12 @@ export function OffboardingManager({
 }) {
   const router = useRouter();
   const [selectedEmployeeCode, setSelectedEmployeeCode] = useState(employees[0]?.employeeCode || "");
-  const [leavingDate] = useState(new Date().toISOString().slice(0, 10));
+  const [mode, setMode] = useState<RecoveryMode>("offboarding");
+  const [recordDate] = useState(new Date().toISOString().slice(0, 10));
   const [message, setMessage] = useState("");
   const [isPending, startTransition] = useTransition();
   const selectedEmployee = employees.find((item) => item.employeeCode === selectedEmployeeCode);
+  const modeMeta = getRecoveryModeMeta(mode);
 
   async function handleCreate(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -28,11 +33,11 @@ export function OffboardingManager({
     const response = await fetch("/api/offboarding", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ employeeCode: selectedEmployeeCode, leavingDate }),
+      body: JSON.stringify({ employeeCode: selectedEmployeeCode, leavingDate: recordDate, mode }),
     });
     const payload = (await response.json()) as { message?: string };
     if (!response.ok) {
-      setMessage(payload.message || "发起离职回收失败");
+      setMessage(payload.message || modeMeta.createErrorMessage);
       return;
     }
     startTransition(() => router.refresh());
@@ -41,8 +46,24 @@ export function OffboardingManager({
   return (
     <section className="approval-page-layout">
       <form className="panel approval-create-panel" onSubmit={handleCreate}>
-        <h2 className="panel__title">发起离职回收</h2>
-        <p className="panel__subtitle">先从所有在职员工中选择一人，系统会自动读取其名下已分配手机，并生成员工可打开的归还确认链接。</p>
+        <div className="filters-row">
+          {recoveryModes.map((item) => {
+            const itemMeta = getRecoveryModeMeta(item);
+            return (
+              <button
+                key={item}
+                type="button"
+                className="plain-chip-button"
+                aria-pressed={item === mode}
+                onClick={() => setMode(item)}
+              >
+                <StatusPill tone={item === mode ? "selected" : "muted"}>{itemMeta.label}</StatusPill>
+              </button>
+            );
+          })}
+        </div>
+        <h2 className="panel__title">{modeMeta.formTitle}</h2>
+        <p className="panel__subtitle">{modeMeta.formSubtitle}</p>
         <label className="field">
           <span>选择在职员工</span>
           <select aria-label="选择在职员工" value={selectedEmployeeCode} onChange={(event) => setSelectedEmployeeCode(event.target.value)}>
@@ -51,12 +72,12 @@ export function OffboardingManager({
           </select>
         </label>
         <label className="field">
-          <span>离职日期</span>
-          <input aria-label="离职日期" value={leavingDate} readOnly placeholder="YYYY-MM-DD" />
+          <span>{modeMeta.dateLabel}</span>
+          <input aria-label={modeMeta.dateLabel} value={recordDate} readOnly placeholder="YYYY-MM-DD" />
         </label>
         <div className="risk-card">
           <h3>待回收手机预览</h3>
-          <p>{selectedEmployee ? `当前已选择 ${selectedEmployee.label}，以下手机会进入本次回收清单。` : "请选择在职员工后查看其名下手机。"}</p>
+          <p>{selectedEmployee ? `当前已选择 ${selectedEmployee.label}，以下手机会进入本次${modeMeta.label}清单。` : "请选择在职员工后查看其名下手机。"}</p>
           <div className="employee-list">
             {selectedEmployee?.devices.length ? selectedEmployee.devices.map((item) => (
               <article key={item.deviceCode} className="employee-card">
@@ -76,16 +97,20 @@ export function OffboardingManager({
         </div>
         <div className="approval-create-panel__actions">
           {message ? <p className="form-error">{message}</p> : null}
-          <PrimaryButton type="submit" disabled={isPending || !selectedEmployeeCode || !selectedEmployee?.devices.length}>生成离职回收链接</PrimaryButton>
+          <PrimaryButton type="submit" disabled={isPending || !selectedEmployeeCode || !selectedEmployee?.devices.length}>{modeMeta.createButtonLabel}</PrimaryButton>
           {isPending ? <p className="panel__subtitle">提交中...</p> : null}
         </div>
       </form>
       <div>
         {totalCases ? <p className="panel__subtitle">当前共 {totalCases} 条回收记录，每页显示 10 条。</p> : null}
         {cases.map((item) => (
-          <article key={`${item.employeeCode}-${item.leavingDate}`} className="panel approval-card">
+          <article key={item.confirmUrl || `${item.employeeCode}-${item.leavingDate}`} className="panel approval-card">
             <h3>{item.employeeName} · {item.department}</h3>
-            <p>离职日期：{item.leavingDate}</p>
+            <p>{getRecoveryModeMeta(item.mode).recordDateLabel}：{item.leavingDate}</p>
+            <div className="approval-card__links">
+              <StatusPill tone="info">{getRecoveryModeMeta(item.mode).label}</StatusPill>
+              <span>{getRecoveryModeMeta(item.mode).recordHint}</span>
+            </div>
             <StatusPill tone={item.status === "已回收" ? "success" : "warning"}>{item.status}</StatusPill>
             <p>名下设备：{item.devices.length ? item.devices.map((device) => device.deviceCode).join("、") : "暂无设备"}</p>
             <div className="approval-card__links">

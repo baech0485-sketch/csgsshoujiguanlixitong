@@ -1,4 +1,5 @@
 import { getApprovalsCollection, getDevicesCollection, getIncidentsCollection, getOffboardingCollection } from "@/lib/mongodb";
+import { normalizeRecoveryMode } from "@/lib/recovery-mode";
 
 export async function getReceiptConfirmRecord(token: string) {
   const approvals = await getApprovalsCollection();
@@ -46,6 +47,7 @@ export async function getReturnConfirmRecord(token: string) {
   }
 
   return {
+    mode: normalizeRecoveryMode(String(record.mode ?? "")),
     employeeName: String(record.employeeName ?? ""),
     employeeCode: String(record.employeeCode ?? ""),
     department: String(record.department ?? ""),

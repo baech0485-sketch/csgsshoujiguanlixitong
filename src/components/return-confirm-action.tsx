@@ -4,8 +4,9 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { RecoveryIcon } from "@/components/icons";
 import { PrimaryButton } from "@/components/ui";
+import { getRecoveryModeMeta, type RecoveryMode } from "@/lib/recovery-mode";
 
-export function ReturnConfirmAction({ token }: { token: string }) {
+export function ReturnConfirmAction({ token, mode }: { token: string; mode: RecoveryMode }) {
   const router = useRouter();
   const [message, setMessage] = useState("");
   const [checks, setChecks] = useState({
@@ -16,6 +17,7 @@ export function ReturnConfirmAction({ token }: { token: string }) {
   const [signedByAgreement, setSignedByAgreement] = useState(false);
   const [isPending, startTransition] = useTransition();
   const canSubmit = Object.values(checks).every(Boolean) && signedByAgreement;
+  const modeMeta = getRecoveryModeMeta(mode);
 
   async function handleClick() {
     setMessage("");
@@ -37,7 +39,7 @@ export function ReturnConfirmAction({ token }: { token: string }) {
       <div className="mobile-checklist">
         <label className="mobile-check-option"><input aria-label="确认以上手机已全部交回公司" type="checkbox" checked={checks.returnedAll} onChange={(event) => setChecks((current) => ({ ...current, returnedAll: event.target.checked }))} /><span>确认以上手机已全部交回公司</span></label>
         <label className="mobile-check-option"><input aria-label="确认设备外观和数量与页面一致" type="checkbox" checked={checks.matchesPage} onChange={(event) => setChecks((current) => ({ ...current, matchesPage: event.target.checked }))} /><span>确认设备外观和数量与页面一致</span></label>
-        <label className="mobile-check-option"><input aria-label="确认本人已完成离职交接中的手机归还责任" type="checkbox" checked={checks.handover} onChange={(event) => setChecks((current) => ({ ...current, handover: event.target.checked }))} /><span>确认本人已完成离职交接中的手机归还责任</span></label>
+        <label className="mobile-check-option"><input aria-label={modeMeta.confirmChecklistLabel} type="checkbox" checked={checks.handover} onChange={(event) => setChecks((current) => ({ ...current, handover: event.target.checked }))} /><span>{modeMeta.confirmChecklistLabel}</span></label>
       </div>
       <div className="mobile-agreement-card">
         <label className="mobile-agreement-card__label">
@@ -54,7 +56,7 @@ export function ReturnConfirmAction({ token }: { token: string }) {
       {!canSubmit ? <p className="panel__subtitle">请先完成归还核对项，并勾选最终确认声明。</p> : null}
       <div className="mobile-receipt-actions">
         <PrimaryButton onClick={handleClick} disabled={isPending || !canSubmit}><RecoveryIcon color="var(--text-inverse)" />{isPending ? "提交中..." : "确认归还并提交回执"}</PrimaryButton>
-        <p className="mobile-receipt-note">确认完成后，员工状态会自动变更为离职，设备会自动回收到手机资产并切回待分配。</p>
+        <p className="mobile-receipt-note">{modeMeta.confirmActionHint}</p>
       </div>
       {message ? <p className="form-error">{message}</p> : null}
     </>

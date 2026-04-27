@@ -11,7 +11,11 @@ test("离职回收页应按员工带出名下设备并生成归还确认链接",
   await page.goto("/employees");
   await page.getByLabel("姓名").fill(employeeName);
   await page.getByLabel("部门", { exact: true }).selectOption("宜昌销售部");
-  await page.getByRole("button", { name: "新增员工" }).click();
+  await Promise.all([
+    page.waitForResponse((response) => response.url().includes("/api/employees") && response.request().method() === "POST" && response.status() === 201),
+    page.getByRole("button", { name: "新增员工" }).click(),
+  ]);
+  await page.goto(`/employees?search=${encodeURIComponent(employeeName)}`);
   const employeeCardSeed = page.getByRole("article").filter({ hasText: employeeName });
   await expect(employeeCardSeed.first()).toBeVisible({ timeout: 15000 });
   const employeeCode = (await employeeCardSeed.locator("p").first().textContent())?.split("·")[0]?.trim() || "";
@@ -48,7 +52,10 @@ test("离职回收页应按员工带出名下设备并生成归还确认链接",
   await expect(page.getByLabel("离职日期")).toHaveAttribute("readonly", "");
   await expect(page.getByText("待回收手机预览")).toBeVisible();
   await expect(page.getByText(deviceCode)).toBeVisible();
-  await page.getByRole("button", { name: "生成离职回收链接" }).click();
+  await Promise.all([
+    page.waitForResponse((response) => response.url().includes("/api/offboarding") && response.request().method() === "POST" && response.status() === 201),
+    page.getByRole("button", { name: "生成离职回收链接" }).click(),
+  ]);
 
   const offboardingCard = page.getByRole("article").filter({ hasText: employeeName }).first();
   await expect(offboardingCard).toBeVisible();

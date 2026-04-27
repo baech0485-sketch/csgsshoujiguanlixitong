@@ -4,6 +4,7 @@ import { ReturnConfirmAction } from "@/components/return-confirm-action";
 import { MobileShell } from "@/components/mobile-shell";
 import { Panel } from "@/components/ui";
 import { getReturnConfirmRecord } from "@/lib/mobile-confirmation-data";
+import { getRecoveryModeMeta } from "@/lib/recovery-mode";
 
 type ReturnConfirmPageProps = {
   searchParams?: Promise<{
@@ -15,6 +16,7 @@ export default async function ReturnConfirmPage({ searchParams }: ReturnConfirmP
   const params = searchParams ? await searchParams : undefined;
   const token = params?.token?.trim() || "";
   const record = token ? await getReturnConfirmRecord(token) : null;
+  const modeMeta = record ? getRecoveryModeMeta(record.mode) : null;
 
   return (
     <main className="mobile-page-shell">
@@ -30,14 +32,14 @@ export default async function ReturnConfirmPage({ searchParams }: ReturnConfirmP
                 <div className="mobile-receipt-card__body">
                   <StatusPill tone="danger">{record.status}</StatusPill>
                   <h2>{record.employeeName} 的归还清单</h2>
-                  <p>本页用于确认离职员工名下手机是否已全部交回公司。确认后系统会自动回收设备并同步员工状态。</p>
+                  <p>{modeMeta?.confirmIntro}</p>
                 </div>
               </div>
               <dl className="mobile-receipt-facts">
                 <div><dt>员工姓名</dt><dd>{record.employeeName}</dd></div>
                 <div><dt>员工编号</dt><dd>{record.employeeCode}</dd></div>
                 <div><dt>所属部门</dt><dd>{record.department || "待同步"}</dd></div>
-                <div><dt>离职日期</dt><dd>{record.leavingDate || "未记录"}</dd></div>
+                <div><dt>{modeMeta?.dateLabel}</dt><dd>{record.leavingDate || "未记录"}</dd></div>
               </dl>
             </Panel>
             <Panel title="待归还手机预览" subtitle="以下手机会在员工确认后自动解除责任人，并重新回到手机资产的待分配池。" className="mobile-check-panel mobile-check-panel--receipt">
@@ -53,8 +55,8 @@ export default async function ReturnConfirmPage({ searchParams }: ReturnConfirmP
                 ))}
               </div>
             </Panel>
-            <Panel title="归还确认回执" subtitle="确认后系统会自动完成回收、同步员工离职状态，并将手机转为待分配。">
-              <ReturnConfirmAction token={token} />
+            <Panel title="归还确认回执" subtitle={modeMeta?.confirmPanelSubtitle}>
+              <ReturnConfirmAction token={token} mode={record.mode} />
             </Panel>
           </>
         ) : (

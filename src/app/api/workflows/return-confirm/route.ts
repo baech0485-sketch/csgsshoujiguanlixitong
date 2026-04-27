@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { logDeviceEvent } from "@/lib/device-events";
 import { getDevicesCollection, getEmployeesCollection, getOffboardingCollection } from "@/lib/mongodb";
+import { normalizeRecoveryMode } from "@/lib/recovery-mode";
 import { normalizeReturnConfirmInput } from "@/lib/return-confirm-input";
 
 export async function POST(request: Request) {
@@ -15,6 +16,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "归还链接不存在" }, { status: 404 });
     }
 
+    const mode = normalizeRecoveryMode(String(record.mode ?? ""));
     const deviceCodes = Array.isArray(record.deviceCodes) ? record.deviceCodes.map(String) : [];
     const updatedAt = payload.confirmedAt;
 
@@ -31,10 +33,12 @@ export async function POST(request: Request) {
       },
     );
 
-    await employees.updateOne(
-      { employeeCode: String(record.employeeCode ?? "") },
-      { $set: { status: "离职", updatedAt } },
-    );
+    if (mode === "offboarding") {
+      await employees.updateOne(
+        { employeeCode: String(record.employeeCode ?? "") },
+        { $set: { status: "离职", updatedAt } },
+      );
+    }
 
     await offboarding.updateOne(
       { _id: record._id },
