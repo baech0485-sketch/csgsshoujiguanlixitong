@@ -111,6 +111,70 @@ test("员工确认异常后设备应进入维修中且员工卡片应显示维�
   await expect(updatedEmployeeCard).toContainText("维修中 1 台");
 });
 
+test("异常确认记录应支持删除待员工确认记录", async ({ page }) => {
+  await loginAsAdmin(page);
+  await page.waitForURL(/\/dashboard$/, { timeout: 15000 });
+
+  const suffix = String(Date.now()).slice(-6);
+  const employeeName = `异常删除员工${suffix}`;
+
+  await page.goto("/employees");
+  const employeeCode = await page.getByLabel("员工编号").inputValue();
+  await page.getByLabel("姓名").fill(employeeName);
+  await page.getByLabel("部门", { exact: true }).selectOption("武汉销售部");
+  await page.getByRole("button", { name: "新增员工" }).click();
+
+  await page.goto("/devices?modal=new");
+  const deviceCode = await page.getByLabel("手机编号").inputValue();
+  await page.getByRole("textbox", { name: "品牌" }).fill("Apple");
+  await page.getByRole("textbox", { name: "型号" }).fill("iPhone Incident Delete");
+  await page.getByRole("textbox", { name: "存储容量" }).fill("128G");
+  await page.getByRole("textbox", { name: "序列号" }).fill(`SN-${Date.now()}`);
+  await page.getByLabel("上传手机图片").setInputFiles({
+    name: "phone.png",
+    mimeType: "image/png",
+    buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+cC1UAAAAASUVORK5CYII=", "base64"),
+  });
+  await page.getByRole("button", { name: "提交录入" }).click();
+  await page.waitForURL(/\/devices\?selected=sj-\d{2,}$/);
+
+  await page.goto("/assignments");
+  await page.getByLabel("选择员工").selectOption(employeeCode);
+  await page.getByLabel(`选择设备 ${deviceCode}`).check();
+  await Promise.all([
+    page.waitForResponse((response) => response.url().includes("/api/assignments/execute") && response.ok()),
+    page.getByRole("button", { name: "提交分配" }).click(),
+  ]);
+
+  await page.goto("/incidents");
+  await page.getByLabel("搜索员工").fill(employeeName);
+  await page.getByLabel("选择员工").selectOption(employeeCode);
+  await page.getByLabel("选择异常手机").selectOption(deviceCode);
+  await page.getByLabel("异常类型").selectOption("维修");
+  await Promise.all([
+    page.waitForResponse((response) => response.url().includes("/api/incidents") && response.request().method() === "POST" && response.ok()),
+    page.getByRole("button", { name: "生成异常确认链接" }).click(),
+  ]);
+
+  const recordPanel = page.locator(".panel").filter({ has: page.getByRole("heading", { name: "异常确认记录" }) }).first();
+  const recordCard = recordPanel.getByRole("article").filter({ hasText: employeeName }).first();
+  await expect(recordCard).toBeVisible();
+  await expect(recordCard).toContainText("待员工确认");
+
+  page.once("dialog", async (dialog) => {
+    await dialog.accept();
+  });
+  await Promise.all([
+    page.waitForResponse((response) => /\/api\/incidents\/.+/.test(response.url()) && response.request().method() === "DELETE" && response.ok()),
+    recordCard.getByRole("button", { name: "删除记录" }).click(),
+  ]);
+
+  await expect(recordPanel.getByRole("article").filter({ hasText: employeeName })).toHaveCount(0);
+
+  await page.goto(`/devices?search=${deviceCode}`);
+  await expect(page.getByText("当前状态：已分配")).toBeVisible();
+});
+
 test("异常管理页应展示维修中手机列表并支持维修完成后恢复状态", async ({ page }) => {
   await loginAsAdmin(page);
   await page.waitForURL(/\/dashboard$/, { timeout: 15000 });
