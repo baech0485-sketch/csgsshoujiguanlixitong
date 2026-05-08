@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useMemo, useState, useTransition } from "react";
+import { DevicePhotoUpload } from "@/components/device-photo-upload";
 import { DeviceIcon } from "@/components/icons";
 
 type DeviceDetailFormProps = {
@@ -128,6 +129,7 @@ export function DeviceDetailForm({ code, initialValues }: DeviceDetailFormProps)
           </label>
         ))}
       </div>
+      <DevicePhotoUpload value={form.photoDataUrl} onChange={(value) => setForm((current) => ({ ...current, photoDataUrl: value }))} />
       {message ? <p className="form-error">{message}</p> : null}
       <div className="device-detail-actions">
         <Link href="/devices" className="button button--ghost">返回台账</Link>
