@@ -49,6 +49,7 @@ export default async function ReturnConfirmPage({ searchParams }: ReturnConfirmP
                     <div>
                       <strong>{item.deviceCode}</strong>
                       <p>{item.deviceTitle}</p>
+                      <p>所在地 {item.location}</p>
                     </div>
                     <StatusPill tone="warning">待归还</StatusPill>
                   </article>

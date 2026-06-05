@@ -1,5 +1,21 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { loginAsAdmin } from "./helpers";
+
+async function createEmployee(page: Page, name: string) {
+  await page.goto("/employees");
+  await page.getByLabel("姓名").fill(name);
+  await page.getByLabel("部门", { exact: true }).selectOption("武汉销售部");
+  const responsePromise = page.waitForResponse((response) =>
+    response.url().includes("/api/employees")
+    && response.request().method() === "POST"
+    && response.status() === 201,
+  );
+  await page.getByRole("button", { name: "新增员工" }).click();
+  const response = await responsePromise;
+  const payload = (await response.json()) as { employeeCode?: string };
+  expect(payload.employeeCode).toBeTruthy();
+  return String(payload.employeeCode);
+}
 
 test("员工应可通过领取确认链接勾选确认并完成领用", async ({ page }) => {
   await loginAsAdmin(page);
@@ -7,13 +23,7 @@ test("员工应可通过领取确认链接勾选确认并完成领用", async ({
 
   const suffix = String(Date.now()).slice(-6);
   const employeeName = `领用测试员工${suffix}`;
-
-  await page.goto("/employees");
-  await page.getByLabel("姓名").fill(employeeName);
-  await page.getByLabel("部门", { exact: true }).selectOption("武汉销售部");
-  await page.getByRole("button", { name: "新增员工" }).click();
-  const employeeCardSeed = page.getByRole("article").filter({ hasText: employeeName });
-  const employeeCode = (await employeeCardSeed.locator("p").first().textContent())?.split("·")[0]?.trim() || "";
+  const employeeCode = await createEmployee(page, employeeName);
 
   await page.goto("/devices?modal=new");
   const deviceCode = await page.getByLabel("手机编号").inputValue();
@@ -32,8 +42,12 @@ test("员工应可通过领取确认链接勾选确认并完成领用", async ({
   await page.goto("/assignments");
   await page.getByLabel("选择员工").selectOption(employeeCode);
   await page.getByLabel(`选择设备 ${deviceCode}`).check();
-  await page.getByRole("button", { name: "提交分配" }).click();
+  await Promise.all([
+    page.waitForResponse((response) => response.url().includes("/api/assignments/execute") && response.request().method() === "POST" && response.status() === 201),
+    page.getByRole("button", { name: "提交分配" }).click(),
+  ]);
 
+  await page.goto(`/assignments?search=${encodeURIComponent(employeeName)}`);
   const assignmentCard = page.getByRole("article").filter({ hasText: employeeName }).first();
   await expect(assignmentCard).toBeVisible();
   const href = await assignmentCard.getByRole("button", { name: /领取确认链接/i }).getAttribute("data-link-value");
@@ -60,13 +74,7 @@ test("同一员工多手机分配时领取确认链接内应展示多台手机",
 
   const suffix = String(Date.now()).slice(-6);
   const employeeName = `多机领用员工${suffix}`;
-
-  await page.goto("/employees");
-  await page.getByLabel("姓名").fill(employeeName);
-  await page.getByLabel("部门", { exact: true }).selectOption("武汉销售部");
-  await page.getByRole("button", { name: "新增员工" }).click();
-  const employeeCardSeed = page.getByRole("article").filter({ hasText: employeeName });
-  const employeeCode = (await employeeCardSeed.locator("p").first().textContent())?.split("·")[0]?.trim() || "";
+  const employeeCode = await createEmployee(page, employeeName);
 
   const deviceCodes: string[] = [];
   for (const model of ["iPhone 16", "iPhone 16 Pro"]) {
@@ -90,8 +98,12 @@ test("同一员工多手机分配时领取确认链接内应展示多台手机",
   await page.getByLabel("选择员工").selectOption(employeeCode);
   await page.getByLabel(`选择设备 ${deviceCodes[0]}`).check();
   await page.getByLabel(`选择设备 ${deviceCodes[1]}`).check();
-  await page.getByRole("button", { name: "提交分配" }).click();
+  await Promise.all([
+    page.waitForResponse((response) => response.url().includes("/api/assignments/execute") && response.request().method() === "POST" && response.status() === 201),
+    page.getByRole("button", { name: "提交分配" }).click(),
+  ]);
 
+  await page.goto(`/assignments?search=${encodeURIComponent(employeeName)}`);
   const assignmentCard = page.getByRole("article").filter({ hasText: employeeName }).first();
   const href = await assignmentCard.getByRole("button", { name: /领取确认链接/i }).getAttribute("data-link-value");
   expect(href).toBeTruthy();

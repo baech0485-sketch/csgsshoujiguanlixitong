@@ -56,6 +56,7 @@ export function DevicePreviewPanel({ selected, isLoading = false }: DevicePrevie
               <p>{selected.model.split("/")[0]?.trim() || selected.model}</p>
               <p>{selected.model.split("/")[1]?.trim() || selected.brand || inferBrand(selected.model)}</p>
               <p>手机编号：{selected.code}</p>
+              <p>当前所在地：{selected.location}</p>
               <p>当前责任人：{selected.owner}</p>
               <div className="device-side-panel__status-row">
                 <span>当前状态：</span>

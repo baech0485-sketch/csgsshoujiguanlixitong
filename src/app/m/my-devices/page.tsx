@@ -14,7 +14,7 @@ export default async function MyDevicesPage() {
         {devices.map((item) => (
           <Panel key={item.title} className="mobile-device-card">
             <div className="mobile-device-card__thumb" />
-            <div className="mobile-device-card__info"><h2>{item.title}</h2><p>{item.code}</p>{item.status ? <StatusPill tone={item.tone as "selected" | "warning"}>{item.status}</StatusPill> : null}</div>
+            <div className="mobile-device-card__info"><h2>{item.title}</h2><p>{item.code}</p>{"location" in item ? <p>所在地 {String(item.location)}</p> : null}{item.status ? <StatusPill tone={item.tone as "selected" | "warning"}>{item.status}</StatusPill> : null}</div>
             {item.footer ? <div className="mobile-device-card__footer">{item.footer}</div> : null}
           </Panel>
         ))}

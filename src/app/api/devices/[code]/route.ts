@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { inferDeviceLocation } from "@/lib/device-listing";
 import { getDevicesCollection } from "@/lib/mongodb";
 import { normalizeDevicePatch, type DeviceFormInput } from "@/lib/device-input";
 
@@ -17,7 +18,7 @@ export async function GET(_: Request, context: RouteContext) {
     return NextResponse.json({ message: "设备不存在" }, { status: 404 });
   }
 
-  return NextResponse.json(device);
+  return NextResponse.json({ ...device, location: inferDeviceLocation(String(device.assetCode ?? "")) });
 }
 
 export async function PATCH(request: Request, context: RouteContext) {
@@ -40,7 +41,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       return NextResponse.json({ message: "设备不存在" }, { status: 404 });
     }
 
-    return NextResponse.json(result);
+    return NextResponse.json({ ...result, location: inferDeviceLocation(String(result.assetCode ?? "")) });
   } catch (error) {
     const message = error instanceof Error ? error.message : "更新失败";
     return NextResponse.json({ message }, { status: 400 });

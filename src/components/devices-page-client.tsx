@@ -12,6 +12,7 @@ type DevicesPageClientProps = {
   search: string;
   status: string;
   owner: string;
+  location: string;
   page: number;
   selectedCode: string;
 };
@@ -27,6 +28,7 @@ function buildPageDataUrl({
   search,
   status,
   owner,
+  location,
   page,
   selectedCode,
 }: DevicesPageClientProps) {
@@ -34,21 +36,23 @@ function buildPageDataUrl({
   if (search) query.set("search", search);
   if (status) query.set("status", status);
   if (owner) query.set("owner", owner);
+  if (location) query.set("location", location);
   if (page > 1) query.set("page", String(page));
   if (selectedCode) query.set("selected", selectedCode);
   return `/api/devices/page-data${query.size ? `?${query.toString()}` : ""}`;
 }
 
-function buildQueryBase(search: string, status: string, owner: string) {
+function buildQueryBase(search: string, status: string, owner: string, location: string) {
   const query = new URLSearchParams();
   if (search) query.set("search", search);
   if (status) query.set("status", status);
   if (owner) query.set("owner", owner);
+  if (location) query.set("location", location);
   return query.toString();
 }
 
 export function DevicesPageClient(props: DevicesPageClientProps) {
-  const { owner, page, search, selectedCode, status } = props;
+  const { location, owner, page, search, selectedCode, status } = props;
   const [data, setData] = useState<DevicePageDataResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -59,7 +63,7 @@ export function DevicesPageClient(props: DevicesPageClientProps) {
     setIsLoading(true);
     setErrorMessage("");
 
-    fetch(buildPageDataUrl({ search, status, owner, page, selectedCode }), {
+    fetch(buildPageDataUrl({ search, status, owner, location, page, selectedCode }), {
       signal: controller.signal,
       cache: "no-store",
     })
@@ -83,11 +87,11 @@ export function DevicesPageClient(props: DevicesPageClientProps) {
       });
 
     return () => controller.abort();
-  }, [owner, page, reloadSeed, search, selectedCode, status]);
+  }, [location, owner, page, reloadSeed, search, selectedCode, status]);
 
   const queryBase = useMemo(
-    () => buildQueryBase(search, status, owner),
-    [owner, search, status],
+    () => buildQueryBase(search, status, owner, location),
+    [location, owner, search, status],
   );
 
   const visibleData = data ?? {
@@ -136,6 +140,7 @@ export function DevicesPageClient(props: DevicesPageClientProps) {
           initialSearch={search}
           initialStatus={status}
           initialOwner={owner}
+          initialLocation={location}
           owners={visibleData.owners}
           entryLink="/m/device-entry"
         />

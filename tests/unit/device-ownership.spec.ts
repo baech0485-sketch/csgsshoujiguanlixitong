@@ -21,6 +21,10 @@ describe("device-ownership", () => {
       assignedCount: 1,
       repairingCount: 0,
     });
+    expect(metrics.get("cs-01")?.devices).toEqual([
+      expect.objectContaining({ deviceCode: "sj-01", location: "宜昌" }),
+      expect.objectContaining({ deviceCode: "sj-02", location: "宜昌" }),
+    ]);
     expect(metrics.has("")).toBe(false);
   });
 

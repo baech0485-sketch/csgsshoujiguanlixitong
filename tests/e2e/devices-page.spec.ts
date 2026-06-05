@@ -176,9 +176,10 @@ test("手机录入弹窗应清晰区分自动生成、必填、选填并使用�
   await page.waitForURL(/\/dashboard$/, { timeout: 15000 });
 
   await page.goto("/devices?modal=new");
-  await expect(page.getByText("自动生成", { exact: true })).toHaveCount(3);
+  await expect(page.getByText("自动生成", { exact: true })).toHaveCount(4);
   await expect(page.getByText("必填", { exact: true })).toHaveCount(5);
   await expect(page.getByText("选填", { exact: true })).toHaveCount(0);
+  await expect(page.getByLabel("手机所在地")).toBeVisible();
   await expect(page.getByText("拖拽图片到此处，或点击选择文件")).toBeVisible();
 });
 

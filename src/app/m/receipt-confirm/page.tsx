@@ -40,6 +40,7 @@ export default async function ReceiptConfirmPage({ searchParams }: ReceiptConfir
                 <div><dt>领用员工</dt><dd>{device.employeeName}</dd></div>
                 <div><dt>所属部门</dt><dd>{device.department || "待同步"}</dd></div>
                 <div><dt>主手机编号</dt><dd>{device.deviceCode}</dd></div>
+                <div><dt>主手机所在地</dt><dd>{device.location}</dd></div>
                 <div><dt>员工编号</dt><dd>{device.employeeCode || "待同步"}</dd></div>
                 <div><dt>入库日期</dt><dd>{device.warehousingDate || "未记录"}</dd></div>
               </dl>
@@ -51,6 +52,7 @@ export default async function ReceiptConfirmPage({ searchParams }: ReceiptConfir
                     <div>
                       <strong>{item.deviceCode}</strong>
                       <p>{item.deviceTitle || "设备信息待同步"}</p>
+                      <p>所在地 {item.location}</p>
                       {item.serialNumber ? <p>序列号 {item.serialNumber}</p> : null}
                     </div>
                     <StatusPill tone="warning">待领取</StatusPill>

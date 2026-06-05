@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { DeviceDetailForm } from "@/components/device-detail-form";
 import { DesktopShell } from "@/components/desktop-shell";
 import { Panel } from "@/components/ui";
+import { inferDeviceLocation } from "@/lib/device-listing";
 import { getDevicesCollection } from "@/lib/mongodb";
 
 type DeviceDetailPageProps = {
@@ -26,7 +27,8 @@ async function getDeviceDetail(code: string) {
         serialNumber: String(device.serialNumber ?? ""),
         purchaseDate: String(device.purchaseDate ?? ""),
         purchasePrice: device.purchasePrice ? String(device.purchasePrice) : "",
-    status: String(device.status ?? "待分配"),
+        status: String(device.status ?? "待分配"),
+        location: inferDeviceLocation(String(device.assetCode ?? "")),
       };
     }
   } catch {

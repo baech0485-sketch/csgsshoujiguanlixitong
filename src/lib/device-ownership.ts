@@ -1,3 +1,5 @@
+import { inferDeviceLocation } from "@/lib/device-listing";
+
 export type OwnedDeviceRow = {
   [key: string]: unknown;
   assetCode?: string | null;
@@ -15,6 +17,7 @@ export type OwnerDeviceMetric = {
     deviceCode: string;
     deviceTitle: string;
     status: string;
+    location: string;
   }>;
 };
 
@@ -48,6 +51,7 @@ export function buildOwnerDeviceMetrics(rows: OwnedDeviceRow[]) {
       deviceCode: String(row.assetCode ?? ""),
       deviceTitle: buildDeviceTitle(row),
       status,
+      location: inferDeviceLocation(String(row.assetCode ?? "")),
     });
 
     metrics.set(ownerCode, current);

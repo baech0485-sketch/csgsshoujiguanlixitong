@@ -90,6 +90,7 @@ export default async function DashboardPage() {
                   <div>
                     <strong>{item.code}</strong>
                     <p>{item.title}</p>
+                    <p>所在地：{item.location}</p>
                   </div>
                   <StatusPill tone={toneForStatus(item.status)}>{item.status}</StatusPill>
                 </div>

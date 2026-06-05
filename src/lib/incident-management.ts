@@ -1,5 +1,6 @@
 import { ObjectId } from "mongodb";
 import { buildOwnerDeviceMetrics } from "@/lib/device-ownership";
+import { inferDeviceLocation } from "@/lib/device-listing";
 import { getDevicesCollection, getEmployeesCollection, getIncidentsCollection } from "@/lib/mongodb";
 import { buildServerPagination } from "@/lib/pagination";
 
@@ -10,6 +11,7 @@ export type IncidentEmployeeOption = {
     deviceCode: string;
     deviceTitle: string;
     status: string;
+    location: string;
   }>;
 };
 
@@ -20,6 +22,7 @@ export type IncidentRecordRow = {
   department: string;
   deviceCode: string;
   deviceTitle: string;
+  location: string;
   type: string;
   status: string;
   description: string;
@@ -31,6 +34,7 @@ export type IncidentRecordRow = {
 export type RepairQueueRow = {
   deviceCode: string;
   deviceTitle: string;
+  location: string;
   employeeName: string;
   department: string;
   incidentType: string;
@@ -44,13 +48,15 @@ export type IncidentSummary = {
 };
 
 function mapIncidentRecord(row: Record<string, unknown>): IncidentRecordRow {
+  const deviceCode = String(row.assetCode ?? "");
   return {
     id: String((row._id as ObjectId).toString()),
     employeeCode: String(row.employeeCode ?? ""),
     employeeName: String(row.employeeName ?? ""),
     department: String(row.department ?? ""),
-    deviceCode: String(row.assetCode ?? ""),
+    deviceCode,
     deviceTitle: String(row.deviceTitle ?? ""),
+    location: String(row.location ?? "") || inferDeviceLocation(deviceCode),
     type: String(row.type ?? ""),
     status: String(row.status ?? ""),
     description: String(row.description ?? ""),
@@ -126,6 +132,7 @@ export async function getIncidentWorkspaceView(pageInput = 1, pageSize = 10) {
     return {
       deviceCode,
       deviceTitle: `${String(device.brand ?? "")} ${String(device.model ?? "")} · ${String(device.storage ?? "")}`.trim(),
+      location: inferDeviceLocation(deviceCode),
       employeeName: String(device.currentOwner ?? "未绑定员工"),
       department: String(device.currentDepartment ?? "待同步"),
       incidentType: linkedIncident?.type || "维修",

@@ -1,4 +1,5 @@
 import { normalizeAssignmentInput } from "@/lib/assignment-input";
+import { inferDeviceLocation } from "@/lib/device-listing";
 import { buildWorkflowUrl, createWorkflowToken } from "@/lib/workflow-links";
 
 type AssignmentCommand = {
@@ -99,6 +100,7 @@ async function createAssignmentBatchRecord(
   const deviceItems = devices.map((device) => ({
     deviceCode: device.assetCode,
     deviceTitle: getDeviceTitle(device),
+    location: inferDeviceLocation(device.assetCode),
   }));
 
   const approvalRecord = {

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { inferDeviceLocation } from "@/lib/device-listing";
 import { buildWorkflowUrl, createWorkflowToken } from "@/lib/workflow-links";
 import { logDeviceEvent } from "@/lib/device-events";
 import { normalizeIncidentCreateInput } from "@/lib/incident-create-input";
@@ -66,6 +67,7 @@ export async function POST(request: Request) {
         department: String(employee.department ?? ""),
         assetCode: record.deviceCode,
         deviceTitle: `${String(device.brand ?? "")} ${String(device.model ?? "")} · ${String(device.storage ?? "")}`.trim(),
+        location: inferDeviceLocation(record.deviceCode),
         type: record.type,
         description: record.description,
         status: "待员工确认",

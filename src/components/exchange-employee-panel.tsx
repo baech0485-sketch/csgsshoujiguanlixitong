@@ -75,6 +75,7 @@ export function ExchangeEmployeePanel({
                 <div className={styles.deviceInfo}>
                   <strong>{device.deviceCode}</strong>
                   <p>{device.deviceTitle || "设备信息待同步"}</p>
+                  <p>所在地：{device.location}</p>
                 </div>
                 <StatusPill tone="info">{device.status}</StatusPill>
               </label>

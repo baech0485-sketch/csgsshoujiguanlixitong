@@ -1,3 +1,4 @@
+import { inferDeviceLocation } from "@/lib/device-listing";
 import { getDevicesCollection, getEmployeesCollection } from "@/lib/mongodb";
 
 export type AssignmentEmployeeOption = {
@@ -9,6 +10,7 @@ export type AssignmentDeviceOption = {
   deviceCode: string;
   label: string;
   status: string;
+  location: string;
 };
 
 export type AssignmentRecordRow = {
@@ -39,6 +41,7 @@ export async function getAssignmentWorkspaceView() {
       deviceCode: String(row.assetCode ?? ""),
       label: `${String(row.assetCode ?? "")} · ${String(row.brand ?? "")} ${String(row.model ?? "")} · ${String(row.storage ?? "")}`.trim(),
       status: String(row.status ?? ""),
+      location: inferDeviceLocation(String(row.assetCode ?? "")),
     })),
   };
 }

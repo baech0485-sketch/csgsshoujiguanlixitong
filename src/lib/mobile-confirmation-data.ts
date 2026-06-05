@@ -1,3 +1,4 @@
+import { inferDeviceLocation } from "@/lib/device-listing";
 import { getApprovalsCollection, getDevicesCollection, getIncidentsCollection, getOffboardingCollection } from "@/lib/mongodb";
 import { normalizeRecoveryMode } from "@/lib/recovery-mode";
 
@@ -22,6 +23,7 @@ export async function getReceiptConfirmRecord(token: string) {
     department: String(approval.department ?? ""),
     deviceCode: String(approval.deviceCode ?? ""),
     deviceTitle: String(approval.deviceTitle ?? ""),
+    location: inferDeviceLocation(String(approval.deviceCode ?? "")),
     deviceCount: deviceCodes.length,
     devices: deviceCodes.map((deviceCode) => {
       const device = deviceRows.find((item) => String(item.assetCode ?? "") === deviceCode);
@@ -29,6 +31,7 @@ export async function getReceiptConfirmRecord(token: string) {
         deviceCode,
         deviceTitle:
           device && `${String(device.brand ?? "")} ${String(device.model ?? "")} · ${String(device.storage ?? "")}`.trim(),
+        location: inferDeviceLocation(deviceCode),
         serialNumber: String(device?.serialNumber ?? ""),
       };
     }),
@@ -53,10 +56,14 @@ export async function getReturnConfirmRecord(token: string) {
     department: String(record.department ?? ""),
     status: String(record.status ?? ""),
     leavingDate: String(record.leavingDate ?? ""),
-    devices: Array.isArray(record.devices) ? record.devices.map((item) => ({
-      deviceCode: String((item as { deviceCode?: string }).deviceCode ?? ""),
-      deviceTitle: String((item as { deviceTitle?: string }).deviceTitle ?? ""),
-    })) : [],
+    devices: Array.isArray(record.devices) ? record.devices.map((item) => {
+      const deviceCode = String((item as { deviceCode?: string }).deviceCode ?? "");
+      return {
+        deviceCode,
+        deviceTitle: String((item as { deviceTitle?: string }).deviceTitle ?? ""),
+        location: String((item as { location?: string }).location ?? "") || inferDeviceLocation(deviceCode),
+      };
+    }) : [],
   };
 }
 
@@ -77,6 +84,7 @@ export async function getIncidentConfirmRecord(token: string) {
     department: String(record.department ?? ""),
     deviceCode: String(record.assetCode ?? ""),
     deviceTitle: String(record.deviceTitle ?? ""),
+    location: String(record.location ?? "") || inferDeviceLocation(String(record.assetCode ?? "")),
     type: String(record.type ?? ""),
     description: String(record.description ?? ""),
     serialNumber: String(device?.serialNumber ?? ""),

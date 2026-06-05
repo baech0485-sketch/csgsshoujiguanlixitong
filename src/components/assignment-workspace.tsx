@@ -16,10 +16,15 @@ export function AssignmentWorkspace({
   const router = useRouter();
   const [selectedEmployeeCode, setSelectedEmployeeCode] = useState(employees[0]?.employeeCode || "");
   const [selectedDeviceCodes, setSelectedDeviceCodes] = useState<string[]>([]);
+  const [locationFilter, setLocationFilter] = useState("全部");
   const [message, setMessage] = useState("");
   const [isPending, startTransition] = useTransition();
   const selectedCount = selectedDeviceCodes.length;
   const deviceMap = useMemo(() => new Map(devices.map((item) => [item.deviceCode, item])), [devices]);
+  const filteredDevices = useMemo(
+    () => locationFilter === "全部" ? devices : devices.filter((item) => item.location === locationFilter),
+    [devices, locationFilter],
+  );
 
   useEffect(() => {
     setSelectedDeviceCodes((current) => current.filter((code) => deviceMap.has(code)));
@@ -71,8 +76,16 @@ export function AssignmentWorkspace({
       <label className="field">
         <span>选择设备</span>
         <div className="panel__subtitle">可一次勾选多台待分配手机，当前已选择 {selectedCount} 台。</div>
+        <label className="filter-select assignment-location-filter">
+          <span>手机所在地</span>
+          <select aria-label="手机所在地筛选" value={locationFilter} onChange={(event) => setLocationFilter(event.target.value)}>
+            <option value="全部">全部</option>
+            <option value="宜昌">宜昌</option>
+            <option value="武汉">武汉</option>
+          </select>
+        </label>
         <div className="assignment-device-list">
-          {devices.length ? devices.map((item) => (
+          {filteredDevices.length ? filteredDevices.map((item) => (
             <label key={item.deviceCode} className={`assignment-device-option${selectedDeviceCodes.includes(item.deviceCode) ? " is-selected" : ""}`}>
               <input
                 aria-label={`选择设备 ${item.deviceCode}`}
@@ -83,10 +96,11 @@ export function AssignmentWorkspace({
               <div className="assignment-device-option__body">
                 <strong>{item.deviceCode}</strong>
                 <p>{item.label.split("·").slice(1).join("·").trim() || item.label}</p>
+                <p>所在地：{item.location}</p>
               </div>
               <StatusPill tone="success">{item.status}</StatusPill>
             </label>
-          )) : <div className="device-empty">当前没有可分配设备，请先录入待分配手机。</div>}
+          )) : <div className="device-empty">{devices.length ? "当前所在地筛选下没有可分配手机。" : "当前没有可分配设备，请先录入待分配手机。"}</div>}
         </div>
       </label>
       {message ? <p className="form-error">{message}</p> : null}

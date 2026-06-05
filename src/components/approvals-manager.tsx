@@ -63,6 +63,7 @@ export function ApprovalsManager({
           </div>
           <div className="employee-card__meta">
             <span>手机编号 {item.deviceSummary}</span>
+            <span>所在地 {item.deviceLocationSummary || "待同步"}</span>
             <span>{item.deviceCodes.length > 1 ? `${item.deviceCodes.length} 台手机待确认` : item.deviceTitle}</span>
           </div>
           <div className="approval-card__links">

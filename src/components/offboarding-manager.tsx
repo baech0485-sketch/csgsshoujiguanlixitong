@@ -117,6 +117,7 @@ export function OffboardingManager({
                       <div className="assignment-device-option__body">
                         <strong>{item.deviceCode}</strong>
                         <p>{item.deviceTitle}</p>
+                        <p>所在地：{item.location}</p>
                       </div>
                       <StatusPill tone={checked ? "selected" : "warning"}>{checked ? "已选择" : "待选择"}</StatusPill>
                     </label>
@@ -133,6 +134,7 @@ export function OffboardingManager({
                         <div>
                           <strong>{item.deviceCode}</strong>
                           <p>{item.deviceTitle}</p>
+                          <p>所在地：{item.location}</p>
                         </div>
                         <StatusPill tone="warning">待回收</StatusPill>
                       </div>
@@ -161,7 +163,7 @@ export function OffboardingManager({
               <span>{getRecoveryModeMeta(item.mode).recordHint}</span>
             </div>
             <StatusPill tone={item.status === "已回收" ? "success" : "warning"}>{item.status}</StatusPill>
-            <p>名下设备：{item.devices.length ? item.devices.map((device) => device.deviceCode).join("、") : "暂无设备"}</p>
+            <p>名下设备：{item.devices.length ? item.devices.map((device) => `${device.deviceCode}（${device.location}）`).join("、") : "暂无设备"}</p>
             <div className="approval-card__links">
               <CopyLinkButton label="归还确认链接" value={item.confirmUrl} />
               <span>{item.signedAt ? `确认时间 ${item.signedAt}` : "待员工确认"}</span>

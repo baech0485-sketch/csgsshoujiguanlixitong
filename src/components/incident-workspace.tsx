@@ -92,6 +92,7 @@ export function IncidentWorkspace({
                   <div>
                     <strong>{item.deviceCode}</strong>
                     <p>{item.deviceTitle}</p>
+                    <p>所在地：{item.location}</p>
                   </div>
                   <StatusPill tone={item.status === "修理中" ? "warning" : "selected"}>{item.status}</StatusPill>
                 </div>
@@ -104,7 +105,7 @@ export function IncidentWorkspace({
         <span>选择异常手机</span>
         <select aria-label="选择异常手机" value={selectedDevice?.deviceCode || ""} onChange={(event) => setSelectedDeviceCode(event.target.value)}>
           <option value="">请选择手机</option>
-          {(selectedEmployee?.devices || []).map((item) => <option key={item.deviceCode} value={item.deviceCode}>{item.deviceCode} · {item.deviceTitle}</option>)}
+          {(selectedEmployee?.devices || []).map((item) => <option key={item.deviceCode} value={item.deviceCode}>{item.deviceCode} · {item.deviceTitle} · {item.location}</option>)}
         </select>
       </label>
       <label className="field">

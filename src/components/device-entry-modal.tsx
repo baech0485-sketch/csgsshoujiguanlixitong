@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { DevicePhotoUpload } from "@/components/device-photo-upload";
 import { DeviceIcon } from "@/components/icons";
+import { inferDeviceLocation } from "@/lib/device-listing";
 
 type DeviceFormState = {
   assetCode: string;
@@ -127,6 +128,14 @@ export function DeviceEntryModal({ nextDeviceCode, warehousingDate }: { nextDevi
               {field.hint ? <small className="field__hint">{field.hint}</small> : null}
             </label>
           ))}
+          <label className="field">
+            <span className="field__label-row">
+              <span>手机所在地</span>
+              <span className="field__tag field__tag--自动生成">自动生成</span>
+            </span>
+            <input aria-label="手机所在地" value={inferDeviceLocation(form.assetCode)} readOnly />
+            <small className="field__hint">由手机编号自动判断，sj-1 至 sj-48 为宜昌。</small>
+          </label>
         </div>
         <DevicePhotoUpload value={form.photoDataUrl} onChange={(value) => setForm((current) => ({ ...current, photoDataUrl: value }))} />
         <div className="modal-note">

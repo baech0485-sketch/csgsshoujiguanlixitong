@@ -137,6 +137,9 @@ test("相互交换页应支持切换到单向交换并仅转移员工甲的手�
   ]);
 
   await expect(page.getByText("手机交换已完成", { exact: true })).toBeVisible();
+  await page.goto("/exchange");
+  await page.getByLabel("选择员工甲").selectOption(sourceEmployeeCode);
+  await page.getByLabel("选择员工乙").selectOption(targetEmployeeCode);
   const sourcePanel = page.getByRole("article").filter({ has: page.getByLabel("选择员工甲") }).first();
   const targetPanel = page.getByRole("article").filter({ has: page.getByLabel("选择员工乙") }).first();
   await expect(sourcePanel).toContainText("已分配 0 台");

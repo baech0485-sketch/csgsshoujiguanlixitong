@@ -1,3 +1,4 @@
+import { inferDeviceLocation } from "@/lib/device-listing";
 import { getDevicesCollection, getIncidentsCollection, getOffboardingCollection } from "@/lib/mongodb";
 import { normalizeRecoveryMode } from "@/lib/recovery-mode";
 
@@ -21,6 +22,7 @@ function buildOffboardingDevices(rows: Array<Record<string, unknown>>) {
   return rows.map((item) => ({
     deviceCode: String(item.assetCode ?? ""),
     deviceTitle: `${String(item.brand ?? "")} ${String(item.model ?? "")} · ${String(item.storage ?? "")}`.trim(),
+    location: inferDeviceLocation(String(item.assetCode ?? "")),
   }));
 }
 

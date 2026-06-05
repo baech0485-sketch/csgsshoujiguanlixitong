@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { inferDeviceLocation } from "@/lib/device-listing";
 import { buildWorkflowUrl, createWorkflowToken } from "@/lib/workflow-links";
 import { getDevicesCollection, getEmployeesCollection, getOffboardingCollection } from "@/lib/mongodb";
 import { normalizeRecoveryMode } from "@/lib/recovery-mode";
@@ -88,6 +89,7 @@ export async function POST(request: Request) {
       devices: selectedDevices.map((item) => ({
         deviceCode: String(item.assetCode ?? ""),
         deviceTitle: `${String(item.brand ?? "")} ${String(item.model ?? "")} · ${String(item.storage ?? "")}`.trim(),
+        location: inferDeviceLocation(String(item.assetCode ?? "")),
       })),
       confirmToken,
       confirmUrl,

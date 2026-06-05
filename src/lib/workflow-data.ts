@@ -1,4 +1,5 @@
 import { ObjectId } from "mongodb";
+import { inferDeviceLocation } from "@/lib/device-listing";
 import { approvalQueue, assignmentPool, incidentCases, myDevices, offboardingCases, records } from "@/lib/mock-data";
 import { getApprovalsCollection, getDeviceEventsCollection, getDevicesCollection, getIncidentsCollection, getOffboardingCollection } from "@/lib/mongodb";
 
@@ -57,7 +58,7 @@ export async function getAssignmentView() {
         ? rows.map((row) => ({
             code: String(row.assetCode ?? ""),
             title: `${String(row.brand ?? "")} ${String(row.model ?? "")} · ${String(row.storage ?? "")}`.trim(),
-            desc: "待分配",
+            desc: `待分配 · ${inferDeviceLocation(String(row.assetCode ?? ""))}`,
           }))
         : assignmentPool,
     };
@@ -108,6 +109,7 @@ export async function getMobileDevicesView() {
       title: `${String(row.brand ?? "")} ${String(row.model ?? "")}`.trim(),
       code: `手机编号 ${String(row.assetCode ?? "")}`,
       status: String(row.status ?? ""),
+      location: inferDeviceLocation(String(row.assetCode ?? "")),
       footer: row.updatedAt ? `最后确认：${new Date(String(row.updatedAt)).toISOString().slice(0, 16).replace("T", " ")}` : "",
       tone: "selected",
     }));
@@ -126,6 +128,7 @@ export async function getFirstDeviceByStatus(status: string) {
           title: `${String(row.brand ?? "")} ${String(row.model ?? "")} · ${String(row.storage ?? "")}`.trim(),
           imei1: String(row.imei1 ?? ""),
           status: String(row.status ?? status),
+          location: inferDeviceLocation(String(row.assetCode ?? "")),
         }
       : null;
   } catch {

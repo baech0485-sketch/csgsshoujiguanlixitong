@@ -1,4 +1,5 @@
 import { ObjectId } from "mongodb";
+import { inferDeviceLocation } from "@/lib/device-listing";
 import { getApprovalsCollection } from "@/lib/mongodb";
 import { buildServerPagination } from "@/lib/pagination";
 
@@ -12,6 +13,7 @@ export type ApprovalViewRow = {
   deviceCode: string;
   deviceCodes: string[];
   deviceSummary: string;
+  deviceLocationSummary: string;
   deviceTitle: string;
   status: string;
   confirmUrl: string;
@@ -41,12 +43,17 @@ function mapApprovalRow(row: Record<string, unknown>): ApprovalViewRow {
   const deviceCodes = Array.isArray(row.deviceCodes)
     ? row.deviceCodes.map(String)
     : [String(row.deviceCode ?? "")].filter(Boolean);
+  const deviceLocations = deviceCodes.map((deviceCode) => inferDeviceLocation(deviceCode));
   const deviceSummary = Array.isArray(row.devices)
     ? row.devices
-        .map((item) => String((item as { deviceCode?: string }).deviceCode ?? ""))
+        .map((item) => {
+          const deviceCode = String((item as { deviceCode?: string }).deviceCode ?? "");
+          const location = String((item as { location?: string }).location ?? "") || inferDeviceLocation(deviceCode);
+          return deviceCode ? `${deviceCode}（${location}）` : "";
+        })
         .filter(Boolean)
         .join("、")
-    : deviceCodes.join("、");
+    : deviceCodes.map((deviceCode) => `${deviceCode}（${inferDeviceLocation(deviceCode)}）`).join("、");
 
   return {
     id: String((row._id as ObjectId).toString()),
@@ -56,6 +63,7 @@ function mapApprovalRow(row: Record<string, unknown>): ApprovalViewRow {
     deviceCode: String(row.deviceCode ?? ""),
     deviceCodes,
     deviceSummary,
+    deviceLocationSummary: [...new Set(deviceLocations)].join("、"),
     deviceTitle: String(row.deviceTitle ?? ""),
     status: String(row.status ?? "待领取"),
     confirmUrl: String(row.confirmUrl ?? ""),

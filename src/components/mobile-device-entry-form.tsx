@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { DevicePhotoUpload } from "@/components/device-photo-upload";
 import { DeviceIcon } from "@/components/icons";
 import { PrimaryButton } from "@/components/ui";
+import { inferDeviceLocation } from "@/lib/device-listing";
 
 type DeviceEntryState = {
   assetCode: string;
@@ -65,6 +66,7 @@ export function MobileDeviceEntryForm({
   return (
     <form onSubmit={handleSubmit}>
       <label className="field"><span>手机编号</span><input aria-label="手机编号" value={form.assetCode} readOnly /></label>
+      <label className="field"><span>手机所在地</span><input aria-label="手机所在地" value={inferDeviceLocation(form.assetCode)} readOnly /></label>
       <label className="field"><span>品牌</span><input aria-label="品牌" value={form.brand} onChange={(event) => setForm((current) => ({ ...current, brand: event.target.value }))} /></label>
       <label className="field"><span>型号</span><input aria-label="型号" value={form.model} onChange={(event) => setForm((current) => ({ ...current, model: event.target.value }))} /></label>
       <label className="field"><span>存储容量</span><input aria-label="存储容量" value={form.storage} onChange={(event) => setForm((current) => ({ ...current, storage: event.target.value }))} /></label>

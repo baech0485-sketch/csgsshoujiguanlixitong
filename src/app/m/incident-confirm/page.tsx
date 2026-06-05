@@ -38,6 +38,7 @@ export default async function IncidentConfirmPage({ searchParams }: IncidentConf
               </div>
               <dl className="mobile-receipt-facts">
                 <div><dt>手机编号</dt><dd>{record.deviceCode}</dd></div>
+                <div><dt>手机所在地</dt><dd>{record.location}</dd></div>
                 <div><dt>异常员工</dt><dd>{record.employeeName}</dd></div>
                 <div><dt>员工编号</dt><dd>{record.employeeCode}</dd></div>
                 <div><dt>所属部门</dt><dd>{record.department}</dd></div>

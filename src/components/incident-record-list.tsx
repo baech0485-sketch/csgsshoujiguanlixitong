@@ -36,7 +36,7 @@ export function IncidentRecordList({
       return localRecords;
     }
     return localRecords.filter((item) =>
-      [item.employeeName, item.employeeCode, item.deviceCode, item.deviceTitle, item.type, item.status]
+      [item.employeeName, item.employeeCode, item.deviceCode, item.deviceTitle, item.location, item.type, item.status]
         .join(" ")
         .includes(keyword),
     );
@@ -91,6 +91,7 @@ export function IncidentRecordList({
             <div className="employee-card__meta">
               <span>{item.type}</span>
               <span>{item.deviceTitle}</span>
+              <span>所在地 {item.location}</span>
               {item.description ? <span>{item.description}</span> : null}
             </div>
             <div className="approval-card__links">

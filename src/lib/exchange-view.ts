@@ -11,6 +11,7 @@ export type ExchangeEmployeeOption = {
     deviceCode: string;
     deviceTitle: string;
     status: string;
+    location: string;
   }>;
 };
 

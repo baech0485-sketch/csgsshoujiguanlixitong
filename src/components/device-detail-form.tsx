@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useMemo, useState, useTransition } from "react";
 import { DevicePhotoUpload } from "@/components/device-photo-upload";
 import { DeviceIcon } from "@/components/icons";
+import { inferDeviceLocation } from "@/lib/device-listing";
 
 type DeviceDetailFormProps = {
   code: string;
@@ -21,6 +22,7 @@ type DeviceDetailFormProps = {
     purchaseDate: string;
     purchasePrice: string;
     status: string;
+    location: string;
   };
 };
 
@@ -42,6 +44,7 @@ export function DeviceDetailForm({ code, initialValues }: DeviceDetailFormProps)
       { key: "purchaseDate", label: "入库日期" },
       { key: "purchasePrice", label: "采购金额" },
       { key: "status", label: "当前状态" },
+      { key: "location", label: "所在地" },
     ] as const,
     [],
   );
@@ -103,7 +106,9 @@ export function DeviceDetailForm({ code, initialValues }: DeviceDetailFormProps)
         {fields.map((field) => (
           <label key={field.key} className="field">
             <span>{field.label}</span>
-            {field.key === "status" ? (
+            {field.key === "location" ? (
+              <input value={inferDeviceLocation(form.assetCode)} readOnly />
+            ) : field.key === "status" ? (
               <select
                 value={form.status}
                 onChange={(event) =>

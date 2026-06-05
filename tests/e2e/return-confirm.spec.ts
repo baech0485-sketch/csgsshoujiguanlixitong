@@ -1,5 +1,21 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { loginAsAdmin } from "./helpers";
+
+async function createEmployee(page: Page, name: string) {
+  await page.goto("/employees");
+  await page.getByLabel("姓名").fill(name);
+  await page.getByLabel("部门", { exact: true }).selectOption("武汉销售部");
+  const responsePromise = page.waitForResponse((response) =>
+    response.url().includes("/api/employees")
+    && response.request().method() === "POST"
+    && response.status() === 201,
+  );
+  await page.getByRole("button", { name: "新增员工" }).click();
+  const response = await responsePromise;
+  const payload = (await response.json()) as { employeeCode?: string };
+  expect(payload.employeeCode).toBeTruthy();
+  return String(payload.employeeCode);
+}
 
 test("离职员工应可通过归还链接勾选确认并完成回收", async ({ page }) => {
   await loginAsAdmin(page);
@@ -7,17 +23,7 @@ test("离职员工应可通过归还链接勾选确认并完成回收", async ({
 
   const suffix = String(Date.now()).slice(-6);
   const employeeName = `归还测试员工${suffix}`;
-
-  await page.goto("/employees");
-  await page.getByLabel("姓名").fill(employeeName);
-  await page.getByLabel("部门", { exact: true }).selectOption("武汉销售部");
-  await Promise.all([
-    page.waitForResponse((response) => response.url().includes("/api/employees") && response.request().method() === "POST" && response.status() === 201),
-    page.getByRole("button", { name: "新增员工" }).click(),
-  ]);
-  await page.goto(`/employees?search=${encodeURIComponent(employeeName)}`);
-  const employeeCardSeed = page.getByRole("article").filter({ hasText: employeeName });
-  const employeeCode = (await employeeCardSeed.locator("p").first().textContent())?.split("·")[0]?.trim() || "";
+  const employeeCode = await createEmployee(page, employeeName);
 
   await page.goto("/devices?modal=new");
   const deviceCode = await page.getByLabel("手机编号").inputValue();
@@ -36,8 +42,12 @@ test("离职员工应可通过归还链接勾选确认并完成回收", async ({
   await page.goto("/assignments");
   await page.getByLabel("选择员工").selectOption(employeeCode);
   await page.getByLabel(`选择设备 ${deviceCode}`).check();
-  await page.getByRole("button", { name: "提交分配" }).click();
-  await expect(page.getByRole("article").filter({ hasText: employeeName }).first()).toBeVisible();
+  await Promise.all([
+    page.waitForResponse((response) => response.url().includes("/api/assignments/execute") && response.request().method() === "POST" && response.status() === 201),
+    page.getByRole("button", { name: "提交分配" }).click(),
+  ]);
+  await page.goto(`/assignments?search=${encodeURIComponent(employeeName)}`);
+  await expect(page.getByRole("article").filter({ hasText: employeeName }).first()).toBeVisible({ timeout: 15000 });
 
   await page.goto("/offboarding");
   await page.getByLabel("选择在职员工").selectOption(employeeCode);
@@ -47,7 +57,8 @@ test("离职员工应可通过归还链接勾选确认并完成回收", async ({
   ]);
 
   const offboardingCard = page.getByRole("article").filter({ hasText: employeeName }).first();
-  await expect(offboardingCard).toBeVisible();
+  await page.goto("/offboarding");
+  await expect(offboardingCard).toBeVisible({ timeout: 15000 });
   const href = await offboardingCard.getByRole("button", { name: /归还确认链接/i }).getAttribute("data-link-value");
   expect(href).toBeTruthy();
 

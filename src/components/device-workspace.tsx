@@ -7,7 +7,7 @@ import { PaginationNav } from "@/components/pagination-nav";
 import { DevicePreviewPanel } from "@/components/device-preview-panel";
 import { Panel } from "@/components/ui";
 import { formatBeijingDateTime } from "@/lib/date-time";
-import type { DeviceListRow } from "@/lib/device-listing";
+import { inferDeviceLocation, type DeviceListRow } from "@/lib/device-listing";
 
 type DeviceWorkspaceProps = {
   rows: DeviceListRow[];
@@ -53,6 +53,7 @@ function mapPreviewPayload(payload: DeviceRoutePayload): DeviceListRow {
     model: `${String(payload.brand ?? "")} ${String(payload.model ?? "")} / ${String(payload.storage ?? "")}`.trim(),
     owner: payload.currentOwner ? String(payload.currentOwner) : "库存",
     status: String(payload.status ?? "待分配"),
+    location: inferDeviceLocation(String(payload.assetCode ?? "")),
     date: formatBeijingDateTime(payload.updatedAt ? String(payload.updatedAt) : ""),
     tone: "selected",
     brand: String(payload.brand ?? ""),
@@ -151,7 +152,7 @@ export function DeviceWorkspace({
   return (
     <section className="device-grid">
       <Panel title="设备列表" subtitle={`当前共 ${totalItems} 条记录 · 每页 10 条`} className="device-table-panel">
-        <div className="device-table__head"><span>手机编号</span><span>设备信息</span><span>责任人</span><span>状态</span><span>更新时间</span></div>
+        <div className="device-table__head"><span>手机编号</span><span>设备信息</span><span>责任人</span><span>所在地</span><span>状态</span><span>更新时间</span></div>
         <div className="device-table__body">
           {rows.length ? rows.map((row) => {
             const href = buildSelectionHref(queryBase, row.code, page);
@@ -164,6 +165,7 @@ export function DeviceWorkspace({
                 className={`device-row${activeCode === row.code ? " is-highlight" : ""}`}
               >
                 <span>{row.code}</span><span>{row.model}</span><span>{row.owner}</span>
+                <span>{row.location}</span>
                 <span><AssetStatusPill status={row.status} /></span>
                 <span>{row.date}</span>
               </Link>

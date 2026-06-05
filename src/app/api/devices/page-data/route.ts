@@ -9,6 +9,7 @@ export async function GET(request: Request) {
       search: searchParams.get("search") ?? "",
       status: searchParams.get("status") ?? "",
       owner: searchParams.get("owner") ?? "",
+      location: searchParams.get("location") ?? "",
       brand: "",
     },
     normalizePageParam(searchParams.get("page") ?? ""),

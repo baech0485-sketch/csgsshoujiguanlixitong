@@ -1,4 +1,5 @@
 import { buildOwnerDeviceMetrics } from "@/lib/device-ownership";
+import { inferDeviceLocation } from "@/lib/device-listing";
 import { getDevicesCollection, getEmployeesCollection, getOffboardingCollection } from "@/lib/mongodb";
 import { buildServerPagination } from "@/lib/pagination";
 import { type RecoveryMode, normalizeRecoveryMode } from "@/lib/recovery-mode";
@@ -9,6 +10,7 @@ export type OffboardingEmployeeOption = {
   devices: Array<{
     deviceCode: string;
     deviceTitle: string;
+    location: string;
   }>;
 };
 
@@ -23,6 +25,7 @@ export type OffboardingCaseRow = {
   devices: Array<{
     deviceCode: string;
     deviceTitle: string;
+    location: string;
   }>;
   confirmUrl: string;
   signedAt: string;
@@ -88,6 +91,7 @@ export async function getOffboardingPageView(pageInput = 1, pageSize = 10) {
       devices: metrics?.devices.map((device) => ({
         deviceCode: device.deviceCode,
         deviceTitle: device.deviceTitle,
+        location: device.location,
       })) ?? [],
     };
   });
@@ -104,10 +108,14 @@ export async function getOffboardingPageView(pageInput = 1, pageSize = 10) {
         leavingDate: String(row.leavingDate ?? ""),
         status: String(row.status ?? ""),
         confirmationMethod: String(row.confirmationMethod ?? ""),
-        devices: Array.isArray(row.devices) ? row.devices.map((item) => ({
-          deviceCode: String((item as { deviceCode?: string }).deviceCode ?? ""),
-          deviceTitle: String((item as { deviceTitle?: string }).deviceTitle ?? ""),
-        })) : [],
+        devices: Array.isArray(row.devices) ? row.devices.map((item) => {
+          const deviceCode = String((item as { deviceCode?: string }).deviceCode ?? "");
+          return {
+            deviceCode,
+            deviceTitle: String((item as { deviceTitle?: string }).deviceTitle ?? ""),
+            location: String((item as { location?: string }).location ?? "") || inferDeviceLocation(deviceCode),
+          };
+        }) : [],
         confirmUrl: String(row.confirmUrl ?? ""),
         signedAt: row.signedAt ? new Date(String(row.signedAt)).toLocaleString("zh-CN", { hour12: false }) : "",
       })),

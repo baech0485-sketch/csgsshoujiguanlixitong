@@ -1,12 +1,16 @@
 import { NextResponse } from "next/server";
 import { getNextDeviceCode } from "@/lib/device-data";
+import { inferDeviceLocation } from "@/lib/device-listing";
 import { getDevicesCollection } from "@/lib/mongodb";
 import { normalizeDeviceInput, type DeviceFormInput } from "@/lib/device-input";
 
 export async function GET() {
   const devices = await getDevicesCollection();
   const rows = await devices.find().sort({ updatedAt: -1 }).limit(200).toArray();
-  return NextResponse.json(rows);
+  return NextResponse.json(rows.map((row) => ({
+    ...row,
+    location: inferDeviceLocation(String(row.assetCode ?? "")),
+  })));
 }
 
 export async function POST(request: Request) {
@@ -28,7 +32,7 @@ export async function POST(request: Request) {
       });
 
       const result = await devices.insertOne(record);
-      return NextResponse.json({ insertedId: result.insertedId, assetCode }, { status: 201 });
+      return NextResponse.json({ insertedId: result.insertedId, assetCode, location: inferDeviceLocation(assetCode) }, { status: 201 });
     }
 
     return NextResponse.json({ message: "手机编号生成失败，请重试" }, { status: 409 });

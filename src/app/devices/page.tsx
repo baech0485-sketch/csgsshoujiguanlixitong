@@ -16,6 +16,7 @@ export default async function DevicesPage({ searchParams }: DevicesPageProps) {
     search: String(params.search ?? ""),
     status: String(params.status ?? ""),
     owner: String(params.owner ?? ""),
+    location: String(params.location ?? ""),
   };
   const currentPage = normalizePageParam(String(params.page ?? ""));
   const selectedCode = String(params.selected ?? "");
@@ -28,6 +29,7 @@ export default async function DevicesPage({ searchParams }: DevicesPageProps) {
           search={filters.search}
           status={filters.status}
           owner={filters.owner}
+          location={filters.location}
           page={currentPage}
           selectedCode={selectedCode}
         />

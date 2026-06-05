@@ -1,4 +1,5 @@
 import { unstable_noStore as noStore } from "next/cache";
+import { inferDeviceLocation } from "@/lib/device-listing";
 import { buildStatusCountMap } from "@/lib/device-ownership";
 import {
   getAdminUsersCollection,
@@ -14,7 +15,7 @@ import { dashboardStats } from "@/lib/mock-data";
 type MetricCard = { label: string; value: string; accent: string };
 type SummaryRow = { label: string; value: string; ratio: number; tone: "success" | "selected" | "warning" | "info" | "danger"; hint: string };
 type ActivityRow = { title: string; meta: string; tone: "success" | "selected" | "warning" | "info" | "danger" };
-type DeviceRow = { code: string; title: string; status: string };
+type DeviceRow = { code: string; title: string; status: string; location: string };
 
 export type DashboardSnapshot = {
   connectionStatus: "已连接" | "连接失败";
@@ -170,6 +171,7 @@ export async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
         code: String(item.assetCode ?? ""),
         title: `${String(item.brand ?? "")} ${String(item.model ?? "")} / ${String(item.storage ?? "")}`.trim(),
         status: String(item.status ?? "待分配"),
+        location: inferDeviceLocation(String(item.assetCode ?? "")),
       })),
       recentActivities: recentEvents.map((item) => ({
         title: String(item.title ?? "系统事件"),

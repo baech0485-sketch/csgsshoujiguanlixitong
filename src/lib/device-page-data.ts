@@ -1,5 +1,5 @@
 import { formatBeijingDateTime } from "@/lib/date-time";
-import { buildDeviceMongoQuery, type DeviceFilters, type DeviceListRow } from "@/lib/device-listing";
+import { buildDeviceMongoQuery, inferDeviceLocation, type DeviceFilters, type DeviceListRow } from "@/lib/device-listing";
 import { buildStatusCountMap, type StatusCountRow } from "@/lib/device-ownership";
 import { buildDeviceStatusCards } from "@/lib/device-status-summary";
 import { buildServerPagination } from "@/lib/pagination";
@@ -73,6 +73,7 @@ function mapDeviceRow(row: DeviceDocument): DeviceListRow {
     model: `${String(row.brand ?? "")} ${String(row.model ?? "")} / ${String(row.storage ?? "")}`.trim(),
     owner: row.currentOwner ? String(row.currentOwner) : "库存",
     status: String(row.status ?? "待分配"),
+    location: inferDeviceLocation(String(row.assetCode ?? "")),
     date: formatBeijingDateTime(row.updatedAt ? String(row.updatedAt) : ""),
     tone: "selected",
     brand: String(row.brand ?? ""),

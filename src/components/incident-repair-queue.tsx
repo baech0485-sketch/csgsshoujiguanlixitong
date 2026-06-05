@@ -20,7 +20,7 @@ export function IncidentRepairQueue({ items }: { items: RepairQueueRow[] }) {
       return items;
     }
     return items.filter((item) =>
-      [item.deviceCode, item.deviceTitle, item.employeeName, item.department, item.incidentType]
+      [item.deviceCode, item.deviceTitle, item.location, item.employeeName, item.department, item.incidentType]
         .join(" ")
         .includes(keyword),
     );
@@ -74,6 +74,7 @@ export function IncidentRepairQueue({ items }: { items: RepairQueueRow[] }) {
               <div className="employee-card__meta">
                 <span>{item.employeeName}</span>
                 <span>{item.department}</span>
+                <span>所在地 {item.location}</span>
                 <span>{item.incidentType}</span>
                 {item.confirmedAt ? <span>确认时间 {item.confirmedAt}</span> : null}
               </div>

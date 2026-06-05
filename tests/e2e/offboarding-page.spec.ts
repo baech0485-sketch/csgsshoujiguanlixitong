@@ -42,7 +42,7 @@ test("离职回收页应按员工带出名下设备并生成归还确认链接",
     page.getByRole("button", { name: "提交分配" }).click(),
   ]);
 
-  await page.goto("/assignments");
+  await page.goto(`/assignments?search=${encodeURIComponent(employeeName)}`);
   const assignmentCard = page.getByRole("article").filter({ hasText: employeeName }).first();
   await expect(assignmentCard).toBeVisible({ timeout: 15000 });
 
@@ -57,8 +57,9 @@ test("离职回收页应按员工带出名下设备并生成归还确认链接",
     page.getByRole("button", { name: "生成离职回收链接" }).click(),
   ]);
 
+  await page.goto("/offboarding");
   const offboardingCard = page.getByRole("article").filter({ hasText: employeeName }).first();
-  await expect(offboardingCard).toBeVisible();
+  await expect(offboardingCard).toBeVisible({ timeout: 15000 });
   await expect(offboardingCard.getByText("待回收", { exact: true })).toBeVisible();
   await expect(offboardingCard.getByRole("button", { name: /归还确认链接/i })).toBeVisible();
 });
