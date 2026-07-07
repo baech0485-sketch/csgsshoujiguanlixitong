@@ -49,7 +49,7 @@ describe("getAssignmentWorkspaceView", () => {
     const view = await getAssignmentWorkspaceView();
 
     expect(view.devices).toEqual([
-      expect.objectContaining({ deviceCode: "sj-12", location: "宜昌" }),
+      expect.objectContaining({ deviceCode: "sj-12", location: "武汉" }),
       expect.objectContaining({ deviceCode: "sj-88", location: "武汉" }),
     ]);
   });

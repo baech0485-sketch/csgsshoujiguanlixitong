@@ -118,13 +118,13 @@ describe("executeAssignment", () => {
     expect(result.records).toHaveLength(1);
     expect(result.records[0].deviceCodes).toEqual(["sj-01", "sj-02"]);
     expect(result.records[0].devices).toEqual([
-      expect.objectContaining({ deviceCode: "sj-01", location: "宜昌" }),
-      expect.objectContaining({ deviceCode: "sj-02", location: "宜昌" }),
+      expect.objectContaining({ deviceCode: "sj-01", location: "武汉" }),
+      expect.objectContaining({ deviceCode: "sj-02", location: "武汉" }),
     ]);
     expect(createApproval).toHaveBeenCalledWith(expect.objectContaining({
       devices: [
-        expect.objectContaining({ deviceCode: "sj-01", location: "宜昌" }),
-        expect.objectContaining({ deviceCode: "sj-02", location: "宜昌" }),
+        expect.objectContaining({ deviceCode: "sj-01", location: "武汉" }),
+        expect.objectContaining({ deviceCode: "sj-02", location: "武汉" }),
       ],
     }));
     expect(createApproval).toHaveBeenCalledTimes(1);

@@ -21,7 +21,7 @@ test("手机资产页应展示并筛选手机所在地", async ({ page }) => {
       ]
       : [
         {
-          code: "sj-48",
+          code: "sj-42",
           model: "Apple iPhone 14 / 128G",
           owner: "库存",
           status: "待分配",
@@ -57,7 +57,7 @@ test("手机资产页应展示并筛选手机所在地", async ({ page }) => {
   await page.goto("/devices");
 
   await expect(page.getByLabel("所在地")).toBeVisible();
-  await expect(page.getByRole("link", { name: /sj-48/ })).toContainText("宜昌");
+  await expect(page.getByRole("link", { name: /sj-42/ })).toContainText("宜昌");
   await expect(page.getByRole("link", { name: /sj-49/ })).toContainText("武汉");
   await expect(page.getByText("当前所在地：宜昌")).toBeVisible();
 
@@ -65,5 +65,5 @@ test("手机资产页应展示并筛选手机所在地", async ({ page }) => {
   await page.waitForURL(/location=%E6%AD%A6%E6%B1%89/, { timeout: 15000 });
   await expect.poll(() => requestedLocation).toBe("武汉");
   await expect(page.getByRole("link", { name: /sj-49/ })).toContainText("武汉");
-  await expect(page.getByRole("link", { name: /sj-48/ })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /sj-42/ })).toHaveCount(0);
 });

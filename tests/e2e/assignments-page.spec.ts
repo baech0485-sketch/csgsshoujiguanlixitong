@@ -3,7 +3,7 @@ import { loginAsAdmin } from "./helpers";
 
 function locationForCode(code: string) {
   const sequence = Number.parseInt(code.replace(/^sj-/, ""), 10);
-  return sequence >= 1 && sequence <= 48 ? "宜昌" : "武汉";
+  return [11, 23, 24, 25, 28, 37, 42].includes(sequence) ? "宜昌" : "武汉";
 }
 
 async function createEmployee(page: Page, name: string) {

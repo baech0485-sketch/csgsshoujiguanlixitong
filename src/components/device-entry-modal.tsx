@@ -134,7 +134,7 @@ export function DeviceEntryModal({ nextDeviceCode, warehousingDate }: { nextDevi
               <span className="field__tag field__tag--自动生成">自动生成</span>
             </span>
             <input aria-label="手机所在地" value={inferDeviceLocation(form.assetCode)} readOnly />
-            <small className="field__hint">由手机编号自动判断，sj-1 至 sj-48 为宜昌。</small>
+            <small className="field__hint">由手机编号自动判断，sj-11、sj-23、sj-24、sj-25、sj-28、sj-37、sj-42 为宜昌。</small>
           </label>
         </div>
         <DevicePhotoUpload value={form.photoDataUrl} onChange={(value) => setForm((current) => ({ ...current, photoDataUrl: value }))} />

@@ -19,10 +19,13 @@ export type DeviceFilters = {
 };
 
 type DeviceMongoQuery = Record<string, unknown>;
-const YICHANG_DEVICE_CODES = Array.from({ length: 48 }, (_, index) => {
-  const sequence = index + 1;
-  return [`sj-${sequence}`, `sj-${String(sequence).padStart(2, "0")}`];
-}).flat();
+const YICHANG_DEVICE_NUMBERS = new Set([11, 23, 24, 25, 28, 37, 42]);
+const YICHANG_DEVICE_CODES = Array.from(new Set(
+  Array.from(YICHANG_DEVICE_NUMBERS).flatMap((sequence) => [
+    `sj-${sequence}`,
+    `sj-${String(sequence).padStart(2, "0")}`,
+  ]),
+));
 
 function normalized(value: string) {
   return value.trim().toLowerCase();
@@ -39,7 +42,7 @@ export function inferDeviceLocation(code: string) {
   }
 
   const sequence = Number.parseInt(match[1], 10);
-  return sequence >= 1 && sequence <= 48 ? "宜昌" : "武汉";
+  return YICHANG_DEVICE_NUMBERS.has(sequence) ? "宜昌" : "武汉";
 }
 
 export function applyDeviceFilters(rows: DeviceListRow[], filters: DeviceFilters) {
